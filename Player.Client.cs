@@ -14,7 +14,7 @@ public partial class Player : BaseNetworkable, IPlayerData, IPlayerStatus
 	/// Uses Sandbox.Client.PlayerId
 	/// note: This doesn't really need to be networked at the moment
 	/// </summary>
-	[Net] public List<long> PlayedBy { get; private set; }
+	[Net] public IList<long> PlayedBy { get; private set; }
 
 	/// <summary>
 	/// Check if provided client is allowed to play using this player
@@ -28,4 +28,19 @@ public partial class Player : BaseNetworkable, IPlayerData, IPlayerStatus
 	/// </summary>
 	/// <param name="client">Client</param>
 	public void AddClient( Client client ) => PlayedBy.Add( client.PlayerId );
+
+	[Net] private Client InternalClient { get; set; }
+
+	public Client Client
+	{
+		get => InternalClient;
+		set
+		{
+			if ( Host.IsClient )
+				return;
+			if ( value != null && !HasClient( value ) )
+				throw new System.Exception( "Tried to set player client to unassociated client" ); // todo: use custom exception
+			InternalClient = value;
+		}
+	}
 }
