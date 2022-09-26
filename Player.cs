@@ -27,7 +27,7 @@ public interface IPlayerStatus
 
 public partial class Player : BaseNetworkable, IPlayerData, IPlayerStatus
 {
-	public Player() { }
+	public Player() => Uid = Guid.NewGuid();
 
 	/// <summary>
 	/// Unique ID for player
