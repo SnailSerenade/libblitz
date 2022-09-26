@@ -5,6 +5,7 @@
  */
 namespace libblitz;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Sandbox;
 
 public partial class Player : BaseNetworkable, IPlayerData, IPlayerStatus
@@ -29,8 +30,10 @@ public partial class Player : BaseNetworkable, IPlayerData, IPlayerStatus
 	/// <param name="client">Client</param>
 	public void AddClient( Client client ) => PlayedBy.Add( client.PlayerId );
 
+	[JsonIgnore]
 	[Net] private Client InternalClient { get; set; }
 
+	[JsonIgnore]
 	public Client Client
 	{
 		get => InternalClient;
