@@ -91,7 +91,7 @@ public static class Activity
 /// Single activity
 /// </summary>
 /// <typeparam name="T">Activity pawn type</typeparam>
-public abstract partial class Activity<T> : Sandbox.Entity, IActivity where T : Pawn
+public abstract partial class Activity<T> : Sandbox.Entity, IActivity where T : Entity
 {
 	[Net] public IList<Player> Players { get; set; } = new List<Player>();
 	public Type PawnType => typeof( T );
@@ -120,10 +120,7 @@ public abstract partial class Activity<T> : Sandbox.Entity, IActivity where T : 
 	// "Sandbox.ClientRpc" required until below is fixed
 	// https://github.com/Facepunch/sbox-issues/issues/2359
 	[Sandbox.ClientRpc] public abstract void ClientInitialize();
-
-	public virtual void Simulate( Client cl ) { }
-	public virtual void FrameSimulate( Client cl ) { }
-
+	
 	public virtual void StopBeingCurrentActivity() { }
 	public virtual void BecomeCurrentActivity()
 	{
