@@ -16,6 +16,7 @@ public interface IPlayerData
 	public bool CanBeBot { get; set; }
 	public int Coins { get; set; }
 	public int SpecialCoins { get; set; }
+	public string SavedTileName { get; set; }
 }
 
 public interface IPlayerStatus
@@ -49,6 +50,6 @@ public partial class Player : BaseNetworkable, IPlayerData, IPlayerStatus
 	public bool Ready => Client != null || CanBeBot;
 
 	[Net] public int Coins { get; set; } = 0;
-
 	[Net] public int SpecialCoins { get; set; } = 0;
+	[Net] public string SavedTileName { get; set; } = null;
 }
