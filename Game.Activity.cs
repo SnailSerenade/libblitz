@@ -39,13 +39,13 @@ public abstract partial class Game : Sandbox.Game, IGameData
 	{
 		base.Simulate( cl );
 
-		Activity.Current?.Simulate();
+		Activity.Current?.Simulate( cl );
 	}
 
 	public override void FrameSimulate( Client cl )
 	{
 		base.FrameSimulate( cl );
 
-		Activity.Current?.FrameSimulate();
+		Activity.Current?.FrameSimulate( cl );
 	}
 }

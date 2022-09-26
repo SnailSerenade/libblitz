@@ -49,12 +49,12 @@ public interface IActivity
 	/// <summary>
 	/// Called on every Game.Simulate
 	/// </summary>
-	public void Simulate();
+	public void Simulate( Client cl );
 
 	/// <summary>
 	/// Called on every Game.FrameSimulate
 	/// </summary>
-	public void FrameSimulate();
+	public void FrameSimulate( Client cl );
 
 	/// <summary>
 	/// (most likely) Called when Game.Players is changed
@@ -121,8 +121,8 @@ public abstract partial class Activity<T> : Sandbox.Entity, IActivity where T : 
 	// https://github.com/Facepunch/sbox-issues/issues/2359
 	[Sandbox.ClientRpc] public abstract void ClientInitialize();
 
-	public virtual void Simulate() { }
-	public virtual void FrameSimulate() { }
+	public virtual void Simulate( Client cl ) { }
+	public virtual void FrameSimulate( Client cl ) { }
 
 	public virtual void StopBeingCurrentActivity() { }
 	public virtual void BecomeCurrentActivity()
