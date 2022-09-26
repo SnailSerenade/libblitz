@@ -14,6 +14,8 @@ public interface IPlayerData
 	public string DisplayName { get; set; }
 	public IList<long> PlayedBy { get; }
 	public bool CanBeBot { get; set; }
+	public int Coins { get; set; }
+	public int SpecialCoins { get; set; }
 }
 
 public interface IPlayerStatus
@@ -45,4 +47,8 @@ public partial class Player : BaseNetworkable, IPlayerData, IPlayerStatus
 	[Net] public bool CanBeBot { get; set; } = false;
 
 	public bool Ready => Client != null || CanBeBot;
+
+	[Net] public int Coins { get; set; } = 0;
+
+	[Net] public int SpecialCoins { get; set; } = 0;
 }
