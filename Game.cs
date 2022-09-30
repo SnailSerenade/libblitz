@@ -3,15 +3,16 @@
  * library used across the board gamemode & minigames
  * - lotuspar, 2022 (github.com/lotuspar)
  */
-namespace libblitz;
 using System;
 using System.Collections.Generic;
 using Sandbox;
 
+namespace libblitz;
+
 public interface IGameData
 {
 	/// <summary>
-	/// Unique ID for library game info
+	/// Unique ID for game info
 	/// </summary>
 	public Guid Uid { get; }
 
@@ -28,18 +29,24 @@ public interface IGameData
 
 public abstract partial class Game : Sandbox.Game, IGameData
 {
+	public static new Game Current => Sandbox.Game.Current as Game;
+
 	public Game()
 	{
 		Uid = Guid.NewGuid();
-		if ( Host.IsServer )
-			FileSystem.OrganizationData.CreateDirectory( StorageLocation );
+
+		InitializeStorage();
+
+		if ( Host.IsClient )
+			Hud = new();
 	}
 
-	public static new Game Current => Sandbox.Game.Current as Game;
+	[Net]
+	public Guid Uid { get; private set; }
 
-	[Net] public Guid Uid { get; set; }
+	[Net]
+	public string DisplayName { get; set; }
 
-	[Net] public string DisplayName { get; set; } = "Unknown";
-
-	[Net] public IList<Player> Players { get; private set; } = new List<Player>();
+	[Net]
+	public IList<Player> Players { get; private set; }
 }

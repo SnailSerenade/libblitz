@@ -3,11 +3,11 @@
  * library used across the board gamemode & minigames
  * - lotuspar, 2022 (github.com/lotuspar)
  */
-namespace libblitz;
-using System;
 using Sandbox;
 
-public abstract partial class Game : Sandbox.Game, IGameData
+namespace libblitz;
+
+public abstract partial class Game
 {
 	public override void ClientJoined( Client cl )
 	{
@@ -19,7 +19,7 @@ public abstract partial class Game : Sandbox.Game, IGameData
 				player.Client = cl;
 		}
 
-		Activity.Current?.PlayerListUpdate();
+		Activity?.PlayerChange();
 	}
 
 	public override void ClientDisconnect( Client cl, NetworkDisconnectionReason reason )
@@ -32,20 +32,6 @@ public abstract partial class Game : Sandbox.Game, IGameData
 				player.Client = null;
 		}
 
-		Activity.Current?.PlayerListUpdate();
-	}
-
-	public override void Simulate( Client cl )
-	{
-		base.Simulate( cl );
-
-		Activity.Current?.Simulate( cl );
-	}
-
-	public override void FrameSimulate( Client cl )
-	{
-		base.FrameSimulate( cl );
-
-		Activity.Current?.FrameSimulate( cl );
+		Activity?.PlayerChange();
 	}
 }

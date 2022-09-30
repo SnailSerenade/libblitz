@@ -3,13 +3,20 @@
  * library used across the board gamemode & minigames
  * - lotuspar, 2022 (github.com/lotuspar)
  */
-namespace libblitz;
 using System;
+using System.Collections.Generic;
 using Sandbox;
+
+namespace libblitz;
 
 public abstract partial class Game : Sandbox.Game, IGameData
 {
-	public const string StorageLocation = "libblitz/games";
+	public const string StorageLocation = "libblitz/games_v000";
+
+	private static void InitializeStorage()
+	{
+		FileSystem.OrganizationData.CreateDirectory( StorageLocation );
+	}
 
 	/// <summary>
 	/// Load game state from file on disk

@@ -4,155 +4,142 @@
  * - lotuspar, 2022 (github.com/lotuspar)
  * this is inspired by / based on:
  * - https://github.com/Facepunch/sbox-spire/blob/main/code/Gamemodes/BaseGamemode.cs
+ *     * (actually, the whole Activity system is based on the above!)
  */
 namespace libblitz;
+
 using System;
-using Sandbox;
 using System.Collections.Generic;
+using Sandbox;
 
 public interface IActivity
 {
-	public IList<Player> Players { get; }
-	public Type PawnType { get; }
-
 	/// <summary>
-	/// Start activity if all criteria are met:
-	/// 1. the Activity Player list is initialized and all those players are ready,
-	/// 2. the Activity hasn't been initialized yet,
-	/// 3. the global current Activity _is_ this one.
-	/// If all criteria are met then Initialize and ClientInitialize are called
+	/// Subset of the global Player list
 	/// </summary>
-	public void TryInitialize();
+	public IList<Player> Players { get; }
+
+	public Type PawnType { get; }
+	public Type HudPanelType { get; }
 
 	/// <summary>
-	/// Called once after TryInitialize succeeds.
-	/// This should prepare the Activity for the whole time it exists.
+	/// Called when all players are ready.
 	/// </summary>
 	public void Initialize();
 
 	/// <summary>
-	/// Called once client-side after TryInitialize succeeds.
-	/// This should prepare the Activity for the whole time it exists.
-	/// </summary>
-	public void ClientInitialize();
-
-	/// <summary>
-	/// Called when this Activity becomes the global current Activity
-	/// </summary>
-	public void BecomeCurrentActivity();
-
-	/// <summary>
-	/// Called when this Activity stops being the global current Activity
-	/// </summary>
-	public void StopBeingCurrentActivity();
-
-	/// <summary>
 	/// Called on every Game.Simulate
+	/// "Called when simulating as part of a player's tick. Like if it's a pawn."
 	/// </summary>
-	public void Simulate( Client cl );
+	/// <param name="cl">Client</param>
+	public void Simulate( Sandbox.Client cl );
 
 	/// <summary>
 	/// Called on every Game.FrameSimulate
+	/// "Called each frame clientside only on Pawn (and anything the pawn decides to call it on)"
 	/// </summary>
-	public void FrameSimulate( Client cl );
+	/// <param name="cl">Client</param>
+	public void FrameSimulate( Sandbox.Client cl );
 
 	/// <summary>
-	/// (most likely) Called when Game.Players is changed
+	/// Called when a player (libblitz.Player) has lost / gained a client
 	/// </summary>
-	public void PlayerListUpdate();
-}
-
-/// <summary>
-/// Global Activity Data
-/// </summary>
-public static class Activity
-{
-	private static IActivity InternalCurrent { get; set; } = null;
+	public void PlayerChange();
 
 	/// <summary>
-	/// Current global Activity
+	/// Called when the activity becomes the current global activity
 	/// </summary>
-	public static IActivity Current
-	{
-		get => InternalCurrent;
-		set
-		{
-			if ( InternalCurrent != null )
-				InternalCurrent.StopBeingCurrentActivity();
-			InternalCurrent = value;
-			if ( InternalCurrent != null )
-				InternalCurrent.TryInitialize();
-			InternalCurrent.BecomeCurrentActivity();
-		}
-	}
+	public void ActivityActive();
+
+	/// <summary>
+	/// Called when the activity is no longer the current global activity
+	/// </summary>
+	public void ActivityDormant();
 }
 
-/// <summary>
-/// Single activity
-/// </summary>
-/// <typeparam name="T">Activity pawn type</typeparam>
-public abstract partial class Activity<T> : Sandbox.Entity, IActivity where T : Entity
+public abstract partial class Activity : Sandbox.Entity, IActivity
 {
-	[Net] public IList<Player> Players { get; set; } = new List<Player>();
-	public Type PawnType => typeof( T );
-	public bool IsPrepared { get; private set; }
+	public IList<Player> Players { get; private set; }
 
-	public Activity( IList<Player> players ) => Players = players;
+	public abstract Type PawnType { get; }
+	public abstract Type HudPanelType { get; }
 
-	public override void Spawn()
+	public bool PreparedForActivityActive = true;
+	public bool PreparedForInitialize = true;
+
+	public Activity( IList<Player> players )
 	{
-		base.Spawn();
+		Transmit = Sandbox.TransmitType.Always;
 
-		Transmit = TransmitType.Always;
+		Players = players ?? new List<Player>();
 
-		// Set this to current Activity if no other activities running
-		if ( Activity.Current == null )
-		{
-			Log.Info( $"No activities active, using {GetType().Name}" );
-			Activity.Current = this;
-		}
-
-		TryInitialize();
+		AttemptStateUpdate();
 	}
 
-	public abstract void Initialize();
-
-	// "Sandbox.ClientRpc" required until below is fixed
-	// https://github.com/Facepunch/sbox-issues/issues/2359
-	[Sandbox.ClientRpc] public abstract void ClientInitialize();
-	
-	public virtual void StopBeingCurrentActivity() { }
-	public virtual void BecomeCurrentActivity()
+	[ClientRpc]
+	private void InternalClientActivityActive() { ActivityActive(); }
+	public virtual void ActivityActive()
 	{
-		// Set all player pawns to the ones for this activity
+		if ( Host.IsServer )
+		{
+			foreach ( var player in Players )
+				player.SetPawnByType( PawnType );
+		}
+	}
+
+	// This 3 layered ActivityDormant is certainly annoying...
+	public void CallClientActivityDormant()
+	{
 		foreach ( var player in Players )
-			player.Pawn = player.GetPawn( PawnType );
+		{
+			if (player.Client != null)
+				InternalClientActivityDormant( To.Single( player.Client ) );
+		}
+	}
+	[ClientRpc]
+	private void InternalClientActivityDormant()
+	{
+		ActivityDormant();
+	}
+	public virtual void ActivityDormant() { }
+
+	[ClientRpc]
+	private void InternalClientInitialize() { Initialize(); }
+	public virtual void Initialize() { }
+
+	public virtual void PlayerChange()
+	{
+		AttemptStateUpdate();
 	}
 
-	public virtual void PlayerListUpdate() => TryInitialize();
-
-	public void TryInitialize()
+	public virtual void AttemptStateUpdate()
 	{
 		if ( Players.Count == 0 )
 			return;
 
-		if ( IsPrepared )
-			return;
-
-		if ( Activity.Current != this )
-			return;
-
-		bool shouldStart = true;
-
+		bool ready = true;
 		foreach ( var player in Players )
-			if ( player.Client == null )
-				shouldStart = false;
-
-		if ( shouldStart )
 		{
-			Initialize();
-			ClientInitialize();
-			IsPrepared = true;
+			if ( player.Client == null )
+				ready = false;
+		}
+
+		if ( ready )
+		{
+			if ( PreparedForInitialize )
+			{
+				Initialize();
+				foreach ( var player in Players )
+					InternalClientInitialize( To.Single( player.Client ) );
+				PreparedForInitialize = false;
+			}
+			if ( PreparedForActivityActive )
+			{
+				ActivityActive();
+				foreach ( var player in Players )
+					InternalClientActivityActive( To.Single( player.Client ) );
+				PreparedForActivityActive = false;
+			}
 		}
 	}
 }

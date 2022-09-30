@@ -4,52 +4,62 @@
  * - lotuspar, 2022 (github.com/lotuspar)
  */
 namespace libblitz;
+
 using System;
-using System.Collections.Generic;
 using Sandbox;
+using System.Collections.Generic;
 
 public interface IPlayerData
 {
+	/// <summary>
+	/// Unique ID for player
+	/// </summary>
 	public Guid Uid { get; }
+
+	/// <summary>
+	/// Player nickname / display name
+	/// </summary>
 	public string DisplayName { get; set; }
+
+	/// <summary>
+	/// Steam IDs (as of now) of clients that can take over this Player
+	/// </summary>
 	public IList<long> PlayedBy { get; }
+
+	/// <summary>
+	/// Whether or not this player is allowed to be a bot
+	/// </summary>
 	public bool CanBeBot { get; set; }
+}
+
+public interface IPlayerGameData
+{
 	public int Coins { get; set; }
 	public int SpecialCoins { get; set; }
 	public string SavedTileName { get; set; }
 }
 
-public interface IPlayerStatus
+public partial class Player : Entity, IPlayerData, IPlayerGameData
 {
-	public Entity Pawn { get; }
-	public bool Ready { get; }
-	public Client Client { get; }
-	public bool HasClient( Client client );
-	public void AddClient( Client client );
-}
+	public Player()
+	{
+		Transmit = TransmitType.Always;
+		Uid = Guid.NewGuid();
+	}
 
-public partial class Player : BaseNetworkable, IPlayerData, IPlayerStatus
-{
-	public Player() => Uid = Guid.NewGuid();
+	[Net]
+	public Guid Uid { get; }
+	[Net]
+	public string DisplayName { get; set; } = "Unknown";
+	[Net]
+	public bool CanBeBot { get; set; } = false;
+	[Net]
+	public IList<long> PlayedBy { get; } = new List<long>();
 
-	/// <summary>
-	/// Unique ID for player
-	/// </summary>
-	[Net] public Guid Uid { get; set; }
-
-	/// <summary>
-	/// Player nickname / display name
-	/// </summary>
-	[Net] public string DisplayName { get; set; } = "Unknown";
-
-	/// <summary>
-	/// Whether or not this player is allowed to be a bot
-	/// </summary>
-	[Net] public bool CanBeBot { get; set; } = false;
-
-	public bool Ready => Client != null || CanBeBot;
-
-	[Net] public int Coins { get; set; } = 0;
-	[Net] public int SpecialCoins { get; set; } = 0;
-	[Net] public string SavedTileName { get; set; } = null;
+	[Net]
+	public int Coins { get; set; }
+	[Net]
+	public int SpecialCoins { get; set; }
+	[Net]
+	public string SavedTileName { get; set; }
 }
