@@ -32,14 +32,14 @@ public interface IActivity
 	/// "Called when simulating as part of a player's tick. Like if it's a pawn."
 	/// </summary>
 	/// <param name="cl">Client</param>
-	public void Simulate( Sandbox.Client cl );
+	public void Simulate( Client cl );
 
 	/// <summary>
 	/// Called on every Game.FrameSimulate
 	/// "Called each frame clientside only on Pawn (and anything the pawn decides to call it on)"
 	/// </summary>
 	/// <param name="cl">Client</param>
-	public void FrameSimulate( Sandbox.Client cl );
+	public void FrameSimulate( Client cl );
 
 	/// <summary>
 	/// Called when a player (libblitz.Player) has lost / gained a client
@@ -57,8 +57,9 @@ public interface IActivity
 	public void ActivityDormant();
 }
 
-public abstract partial class Activity : Sandbox.Entity, IActivity
+public abstract partial class Activity : Entity, IActivity
 {
+	[Net]
 	public IList<Player> Players { get; private set; }
 
 	public abstract Type PawnType { get; }
@@ -69,7 +70,7 @@ public abstract partial class Activity : Sandbox.Entity, IActivity
 
 	public Activity( IList<Player> players )
 	{
-		Transmit = Sandbox.TransmitType.Always;
+		Transmit = TransmitType.Always;
 
 		Players = players ?? new List<Player>();
 
@@ -92,7 +93,7 @@ public abstract partial class Activity : Sandbox.Entity, IActivity
 	{
 		foreach ( var player in Players )
 		{
-			if (player.Client != null)
+			if ( player.Client != null )
 				InternalClientActivityDormant( To.Single( player.Client ) );
 		}
 	}
