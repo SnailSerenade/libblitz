@@ -15,6 +15,12 @@ public abstract partial class Game
 
 		foreach ( var player in Players )
 		{
+			if ( cl.IsBot && player.CanBeBot && player.Client == null )
+			{
+				player.Client = cl;
+				break;
+			}
+
 			if ( player.HasClient( cl ) ) // this if isn't required but it gives information
 				player.Client = cl;
 		}

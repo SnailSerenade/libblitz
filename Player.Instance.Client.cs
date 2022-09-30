@@ -23,7 +23,7 @@ public partial class Player
 		{
 			if ( Host.IsClient )
 				return;
-			if ( value != null && !HasClient( value ) )
+			if ( !value.IsBot && value != null && !HasClient( value ) )
 				throw new ArgumentException( "Tried to set player client to unassociated client" );
 			InternalClient = value;
 			HandleNewClient( InternalClient );
