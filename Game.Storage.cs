@@ -9,77 +9,125 @@ using Sandbox;
 
 namespace libblitz;
 
+[SelectCopyIncludeAll]
+public class GameData : IGameData
+{
+	public Guid Uid { get; set; }
+	public string DisplayName { get; set; }
+}
+
 public abstract partial class Game : Sandbox.Game, IGameData
 {
-	public const string StorageLocation = "libblitz/games_v000";
+	public const string StorageLocation = "libblitz/games_v001";
+	public const string GameDataName = "game.lblitz";
+	public BaseFileSystem GameStorage { get; private set; }
+	public BaseFileSystem PlayerStorage { get; private set; }
 
-	private static void InitializeStorage()
+	private void InitializeStorage( Guid uid )
 	{
-		FileSystem.OrganizationData.CreateDirectory( StorageLocation );
+		// Create directory tree
+		FileSystem.OrganizationData.CreateDirectory( $"{StorageLocation}/{uid}/players" );
+
+		// Set file systems
+		GameStorage = FileSystem.OrganizationData.CreateSubSystem( $"{StorageLocation}/{uid}" );
+		PlayerStorage = FileSystem.OrganizationData.CreateSubSystem( $"{StorageLocation}/{uid}/players" );
 	}
 
 	/// <summary>
-	/// Load game state from file on disk
+	/// Load game state from storage
 	/// </summary>
-	/// <param name="filename">File name (relative to fileSystem)</param>
-	/// <param name="customFileSystem">File subsystem to use</param>
-	public void LoadFrom( string filename, BaseFileSystem customFileSystem = null )
+	/// <param name="uid"></param>
+	/// <exception cref="Exception"></exception>
+	public void Load( Guid uid )
 	{
 		if ( Host.IsClient )
 			return;
 
-		BaseFileSystem fileSystem = customFileSystem ?? FileSystem.OrganizationData;
-
-		string normalizedFileName = FileSystem.NormalizeFilename( filename );
-
 		// Make sure game data exists
-		if ( !fileSystem.FileExists( normalizedFileName ) )
-			throw new Exception( "Game data not found" );
+		if ( !FileSystem.OrganizationData.DirectoryExists( $"{StorageLocation}/{uid}" ) )
+			throw new Exception( $"Game {uid} not found" );
+
+		// Use this game data as storage
+		InitializeStorage( uid );
 
 		// Attempt to read game data
-		IGameData gameData;
+		GameData gameData;
 		try
 		{
-			gameData = fileSystem.ReadJson<IGameData>(
-				FileSystem.NormalizeFilename( normalizedFileName )
+			gameData = GameStorage.ReadJson<GameData>(
+				GameDataName
 			);
 		}
 		catch ( Exception e )
 		{
-			// todo: find right exception & throw custom exception
 			Log.Error( e );
 			throw new Exception( "Failed to read game data" );
 		}
 
+		if ( Players == null )
+			Players = new List<Player>();
+
+		// Load player data
+		// For each player UID we can load...
+		foreach ( var playerFileName in PlayerStorage.FindFile( "" ) )
+		{
+			Guid playerUid;
+
+			// Get player UID as Guid
+			try
+			{
+				playerUid = Guid.Parse( playerFileName );
+			}
+			catch ( Exception )
+			{
+				Log.Error( $"Unknown file in player storage {playerFileName}" );
+				continue;
+			}
+
+			bool playerAlreadyExists = false;
+			foreach ( Player player in Players )
+			{
+				if ( player.Uid == playerUid )
+				{
+					playerAlreadyExists = true;
+					Log.Info( $"loading existing {player.Uid}" );
+					player.Load();
+				}
+			}
+
+			// Player doesn't exist in this game already. Load and add them
+			if ( !playerAlreadyExists )
+				Players.Add( Player.FromGameStorage( playerUid ) );
+		}
+
 		// Set current game data
-		Uid = gameData.Uid;
-		DisplayName = gameData.DisplayName;
-		Players = gameData.Players;
+		Log.Info( gameData.Uid );
+		Log.Info( gameData.DisplayName );
+		StorageUtil.SelectCopyTo( gameData, this );
 
 		// Debug log
-		Log.Info( $"Loaded game data from {filename}" );
+		Log.Info( $"Loaded game data from {uid}" );
 	}
 
 	/// <summary>
 	/// Save game state to file on disk
 	/// </summary>
-	/// <param name="filename">File name (relative to fileSystem)</param>
-	/// <param name="customFileSystem">File subsystem to use</param>
-	public void SaveAs( string filename, BaseFileSystem customFileSystem = null )
+	public void Save()
 	{
 		if ( Host.IsClient )
 			return;
 
-		BaseFileSystem fileSystem = customFileSystem ?? FileSystem.OrganizationData;
+		InitializeStorage( Uid );
 
-		string normalizedFileName = FileSystem.NormalizeFilename( filename );
+		GameData gameData = new();
+		StorageUtil.SelectCopyTo( this, gameData );
 
 		// Attempt to write game data
 		try
 		{
-			fileSystem.WriteJson<IGameData>(
-				FileSystem.NormalizeFilename( normalizedFileName ),
-				this
+			GameStorage.WriteJson<IGameData>(
+				GameDataName,
+				gameData
 			);
 		}
 		catch ( Exception e )
@@ -88,16 +136,11 @@ public abstract partial class Game : Sandbox.Game, IGameData
 			Log.Error( e );
 			throw new Exception( "Failed to write game data" );
 		}
+
+		// Write player data
+		foreach ( var player in Players )
+		{
+			player.Save();
+		}
 	}
-
-	/// <summary>
-	/// Load game state from game UID
-	/// </summary>
-	/// <param name="uid">Game UID</param>
-	public void Load( Guid uid ) => LoadFrom( $"{StorageLocation}/{uid}" );
-
-	/// <summary>
-	/// Save game state with game UID
-	/// </summary>
-	public void Save() => SaveAs( $"{StorageLocation}/{Uid}" );
 }
