@@ -5,6 +5,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Sandbox;
 
 namespace libblitz;
@@ -14,39 +15,38 @@ public interface IGameData
 	/// <summary>
 	/// Unique ID for game info
 	/// </summary>
+	[SelectCopyIncluded]
 	public Guid Uid { get; }
 
 	/// <summary>
 	/// Game nickname / display name
 	/// </summary>
+	[SelectCopyIncluded]
 	public string DisplayName { get; set; }
-
-	/// <summary>
-	/// List of Players for this game
-	/// </summary>
-	public IList<Player> Players { get; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
 {
+	[JsonIgnore]
 	public static new Game Current => Sandbox.Game.Current as Game;
 
 	public Game()
 	{
 		Uid = Guid.NewGuid();
 
-		InitializeStorage();
-
 		if ( Host.IsClient )
 			Hud = new();
 	}
 
+	[SelectCopyIncluded]
 	[Net]
 	public Guid Uid { get; private set; }
 
+	[SelectCopyIncluded]
 	[Net]
 	public string DisplayName { get; set; }
 
+	[SelectCopyIncluded]
 	[Net]
 	public IList<Player> Players { get; private set; }
 }

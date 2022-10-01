@@ -47,19 +47,32 @@ public partial class Player : Entity, IPlayerData, IPlayerGameData
 		Uid = Guid.NewGuid();
 	}
 
+	public Player( Guid uid )
+	{
+		Transmit = TransmitType.Always;
+		Uid = uid;
+	}
+
+	[SelectCopyIncluded]
 	[Net]
-	public Guid Uid { get; }
+	public Guid Uid { get; private set; }
+	[SelectCopyIncluded]
 	[Net]
 	public string DisplayName { get; set; } = "Unknown";
+	[SelectCopyIncluded]
 	[Net]
 	public bool CanBeBot { get; set; } = false;
+	[SelectCopyIncluded]
 	[Net]
-	public IList<long> PlayedBy { get; } = new List<long>();
+	public IList<long> PlayedBy { get; private set; } = new List<long>();
 
+	[SelectCopyIncluded]
 	[Net]
 	public int Coins { get; set; }
+	[SelectCopyIncluded]
 	[Net]
 	public int SpecialCoins { get; set; }
+	[SelectCopyIncluded]
 	[Net]
 	public string SavedTileName { get; set; }
 }

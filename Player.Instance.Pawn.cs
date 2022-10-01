@@ -19,6 +19,8 @@ public partial class Player
 	[JsonIgnore]
 	[Net]
 	private Entity InternalPawn { get; set; }
+
+	[JsonIgnore]
 	public Entity Pawn
 	{
 		get => InternalPawn;
@@ -31,7 +33,6 @@ public partial class Player
 			throw new ArgumentNullException( nameof( type ), "Pawn type was null" );
 		foreach ( var pawn in Pawns )
 		{
-			Log.Info( $"{pawn.GetType()} == {type}, {pawn.GetType() == type}" );
 			if ( pawn.GetType() == type )
 			{
 				Pawn = pawn;

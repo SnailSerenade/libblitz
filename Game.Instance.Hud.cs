@@ -20,6 +20,8 @@ public abstract partial class Game
 
 	[JsonIgnore]
 	private Sandbox.UI.Panel InternalPanel { get; set; }
+
+	[JsonIgnore]
 	public Sandbox.UI.Panel Panel
 	{
 		get => InternalPanel;
