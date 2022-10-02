@@ -21,6 +21,10 @@ public abstract partial class Game
 	private Activity InternalActivity { get; set; } = null;
 
 	[JsonIgnore]
+	[Net]
+	public ActivityResult PreviousActivityResult { get; private set; } = null;
+
+	[JsonIgnore]
 	public Activity Activity
 	{
 		get => InternalActivity;
@@ -28,7 +32,7 @@ public abstract partial class Game
 		{
 			if ( InternalActivity != null )
 			{
-				InternalActivity.ActivityDormant();
+				PreviousActivityResult = InternalActivity.ActivityDormant();
 				InternalActivity.CallClientActivityDormant();
 			}
 			InternalActivity = value;

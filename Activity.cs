@@ -49,16 +49,18 @@ public interface IActivity
 	/// <summary>
 	/// Called when the activity becomes the current global activity
 	/// </summary>
-	public void ActivityActive();
+	public void ActivityActive( ActivityResult previousActivityResult );
 
 	/// <summary>
 	/// Called when the activity is no longer the current global activity
 	/// </summary>
-	public void ActivityDormant();
+	public ActivityResult ActivityDormant();
 }
 
 public abstract partial class Activity : Entity, IActivity
 {
+	public static Activity Current => Game.Current.Activity;
+
 	[Net]
 	public IList<Player> Players { get; private set; }
 
@@ -78,8 +80,11 @@ public abstract partial class Activity : Entity, IActivity
 	}
 
 	[ClientRpc]
-	private void InternalClientActivityActive() { ActivityActive(); }
-	public virtual void ActivityActive()
+	private void InternalClientActivityActive( ActivityResult previousActivityResult )
+	{
+		ActivityActive( previousActivityResult );
+	}
+	public virtual void ActivityActive( ActivityResult previousActivityResult )
 	{
 		if ( Host.IsServer )
 		{
@@ -102,7 +107,7 @@ public abstract partial class Activity : Entity, IActivity
 	{
 		ActivityDormant();
 	}
-	public virtual void ActivityDormant() { }
+	public virtual ActivityResult ActivityDormant() { return null; }
 
 	[ClientRpc]
 	private void InternalClientInitialize() { Initialize(); }
@@ -136,9 +141,9 @@ public abstract partial class Activity : Entity, IActivity
 			}
 			if ( PreparedForActivityActive )
 			{
-				ActivityActive();
+				ActivityActive( Game.Current.PreviousActivityResult );
 				foreach ( var player in Players )
-					InternalClientActivityActive( To.Single( player.Client ) );
+					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityResult );
 				PreparedForActivityActive = false;
 			}
 		}
