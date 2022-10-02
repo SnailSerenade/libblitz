@@ -41,9 +41,19 @@ public partial class Player
 	/// Allow a client to play using this player
 	/// </summary>
 	/// <param name="client">Client</param>
-	public void AddClient( Client client ) => PlayedBy.Add( client.PlayerId );
+	public void AddClient( Client client ) { PlayedBy.Add( client.PlayerId ); }
 
-	private void HandleNewClient( Client cl )
+	/// <summary>
+	/// Allow a client to play using this player and start using the client
+	/// </summary>
+	/// <param name="client">Client</param>
+	public void SetClient( Client client )
+	{
+		AddClient( client );
+		Client = client;
+	}
+
+	private void HandleNewClient( Client client )
 	{
 		if ( Game.Current.Activity != null && !Game.Current.Activity.PreparedForInitialize )
 			SetPawnByType( Game.Current.Activity.PawnType );

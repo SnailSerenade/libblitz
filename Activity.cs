@@ -74,9 +74,10 @@ public abstract partial class Activity : Entity, IActivity
 	{
 		Transmit = TransmitType.Always;
 
-		Players = players ?? new List<Player>();
+		if ( players == null && Host.IsServer )
+			Log.Info( "Using player list from game!" );
 
-		AttemptStateUpdate();
+		Players = players ?? Game.Current.Players;
 	}
 
 	[ClientRpc]
@@ -88,8 +89,9 @@ public abstract partial class Activity : Entity, IActivity
 	{
 		if ( Host.IsServer )
 		{
-			foreach ( var player in Players )
-				player.SetPawnByType( PawnType );
+			if ( PawnType != null )
+				foreach ( var player in Players )
+					player.SetPawnByType( PawnType );
 		}
 	}
 
@@ -134,17 +136,17 @@ public abstract partial class Activity : Entity, IActivity
 		{
 			if ( PreparedForInitialize )
 			{
+				PreparedForInitialize = false;
 				Initialize();
 				foreach ( var player in Players )
 					InternalClientInitialize( To.Single( player.Client ) );
-				PreparedForInitialize = false;
 			}
 			if ( PreparedForActivityActive )
 			{
+				PreparedForActivityActive = false;
 				ActivityActive( Game.Current.PreviousActivityResult );
 				foreach ( var player in Players )
 					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityResult );
-				PreparedForActivityActive = false;
 			}
 		}
 	}
