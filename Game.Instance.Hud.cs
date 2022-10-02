@@ -15,6 +15,8 @@ public abstract partial class Game
 	[JsonIgnore]
 	private GameHudHost Hud { get; set; }
 
+	public Sandbox.UI.Panel RootPanel => Hud.RootPanel;
+
 	[JsonIgnore]
 	public IList<Sandbox.UI.Panel> Panels { get; } = new List<Sandbox.UI.Panel>();
 
