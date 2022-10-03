@@ -17,8 +17,9 @@ public abstract partial class Game
 	public IList<Activity> Activities { get; protected set; } = new List<Activity>();
 
 	[JsonIgnore]
-	[Net]
+	[Net, Change]
 	private Activity InternalActivity { get; set; } = null;
+	void OnInternalActivityChanged( Activity o, Activity n ) => Event.Run( "libblitz.activityupdate" );
 
 	[SelectCopyIncluded]
 	[Net]
