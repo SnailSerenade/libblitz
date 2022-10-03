@@ -15,14 +15,17 @@ public interface IGameData
 	/// <summary>
 	/// Unique ID for game info
 	/// </summary>
-	[SelectCopyIncluded]
 	public Guid Uid { get; }
 
 	/// <summary>
 	/// Game nickname / display name
 	/// </summary>
-	[SelectCopyIncluded]
 	public string DisplayName { get; set; }
+
+	/// <summary>
+	/// Result of the previous activity to run
+	/// </summary>
+	public ActivityResult PreviousActivityResult { get; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData

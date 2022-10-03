@@ -20,7 +20,7 @@ public abstract partial class Game
 	[Net]
 	private Activity InternalActivity { get; set; } = null;
 
-	[JsonIgnore]
+	[SelectCopyIncluded]
 	[Net]
 	public ActivityResult PreviousActivityResult { get; private set; } = null;
 

@@ -14,6 +14,7 @@ public class GameData : IGameData
 {
 	public Guid Uid { get; set; }
 	public string DisplayName { get; set; }
+	public ActivityResult PreviousActivityResult { get; set; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
@@ -107,6 +108,7 @@ public abstract partial class Game : Sandbox.Game, IGameData
 
 		// Debug log
 		Log.Info( $"Loaded game data from {uid}" );
+		DebugOverlay.ScreenText( "Loaded!", Vector2.One * 20, 0, Color.Black, 3.0f );
 	}
 
 	/// <summary>
@@ -142,5 +144,7 @@ public abstract partial class Game : Sandbox.Game, IGameData
 		{
 			player.Save();
 		}
+
+		DebugOverlay.ScreenText( "Saved!", Vector2.One * 20, 0, Color.Black, 3.0f );
 	}
 }
