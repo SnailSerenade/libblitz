@@ -30,6 +30,12 @@ public interface IPlayerData
 	/// Whether or not this player is allowed to be a bot
 	/// </summary>
 	public bool CanBeBot { get; set; }
+
+	/// <summary>
+	/// Higher numbers == this player's turn is further back in the turn order.
+	/// (0 == first to play, int64_max == last to play)
+	/// </summary>
+	public long TurnOrderIndex { get; }
 }
 
 public interface IPlayerGameData
@@ -45,6 +51,7 @@ public partial class Player : Entity, IPlayerData, IPlayerGameData
 	{
 		Transmit = TransmitType.Always;
 		Uid = Guid.NewGuid();
+		TurnOrderIndex = Random.Shared.NextInt64();
 	}
 
 	public Player( Guid uid )
@@ -56,12 +63,15 @@ public partial class Player : Entity, IPlayerData, IPlayerGameData
 	[SelectCopyIncluded]
 	[Net]
 	public Guid Uid { get; private set; }
+
 	[SelectCopyIncluded]
 	[Net]
 	public string DisplayName { get; set; } = "Unknown";
+
 	[SelectCopyIncluded]
 	[Net]
 	public bool CanBeBot { get; set; } = false;
+
 	[SelectCopyIncluded]
 	[Net]
 	public IList<long> PlayedBy { get; private set; } = new List<long>();
@@ -69,10 +79,16 @@ public partial class Player : Entity, IPlayerData, IPlayerGameData
 	[SelectCopyIncluded]
 	[Net]
 	public int Coins { get; set; }
+
 	[SelectCopyIncluded]
 	[Net]
 	public int SpecialCoins { get; set; }
+
 	[SelectCopyIncluded]
 	[Net]
 	public string SavedTileName { get; set; }
+
+	[SelectCopyIncluded]
+	[Net]
+	public long TurnOrderIndex { get; private set; }
 }

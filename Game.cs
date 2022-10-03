@@ -31,6 +31,11 @@ public interface IGameData
 	/// Amount of turns left for this game
 	/// </summary>
 	public int TurnsLeft { get; }
+
+	/// <summary>
+	/// Current status of the game (in progress, complete, etc.)
+	/// </summary>
+	public GameStatus Status { get; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
@@ -60,5 +65,5 @@ public abstract partial class Game : Sandbox.Game, IGameData
 
 	[SelectCopyIncluded]
 	[Net]
-	public int TurnsLeft { get; private set; }
+	public int TurnsLeft { get; set; }
 }

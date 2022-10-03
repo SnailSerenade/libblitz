@@ -19,6 +19,7 @@ public class PlayerData : IPlayerData
 	public int Coins { get; set; }
 	public int SpecialCoins { get; set; }
 	public string SavedTileName { get; set; }
+	public long TurnOrderIndex { get; set; }
 }
 
 public partial class Player : Entity, IPlayerData, IPlayerGameData
