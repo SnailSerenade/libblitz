@@ -45,7 +45,7 @@ public interface IGameData
 	/// <summary>
 	/// Activity to (maybe) use when restarting the gamemode
 	/// </summary>
-	public string RequestedActivity { get; }
+	public string NextActivity { get; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
@@ -83,5 +83,5 @@ public abstract partial class Game : Sandbox.Game, IGameData
 
 	[SelectCopyIncluded]
 	// [Net] // todo: does this have to be networked?
-	public string RequestedActivity { get; set; }
+	public string NextActivity { get; set; }
 }

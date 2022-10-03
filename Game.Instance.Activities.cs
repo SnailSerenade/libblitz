@@ -37,6 +37,7 @@ public abstract partial class Game
 				InternalActivity.CallClientActivityDormant();
 			}
 			InternalActivity = value;
+			NextActivity = null;
 			if ( InternalActivity == null )
 				return;
 			InternalActivity.PreparedForActivityActive = true;
@@ -60,14 +61,28 @@ public abstract partial class Game
 				return activity;
 		throw new KeyNotFoundException( $"Activity type {type.Name} not found." );
 	}
+	public Activity GetActivityByTypeName( string type )
+	{
+		if ( type == null )
+			throw new ArgumentNullException( nameof( type ), "Activity type was null" );
+		foreach ( var activity in Activities )
+			if ( activity.GetType().Name == type )
+				return activity;
+		throw new KeyNotFoundException( $"Activity type {type} not found." );
+	}
 
 	public void SetActivityByType<T>() => Activity = GetActivityByType<T>();
 	public void SetActivityByType( Type type ) => Activity = GetActivityByType( type );
+	public void SetActivityByTypeName( string type ) => Activity = GetActivityByTypeName( type );
 	public void SetActivity( Activity activity )
 	{
 		AddActivity( activity );
 		Activity = activity;
 	}
+
+	public void SetNextActivityByType<T>() => NextActivity = typeof( T ).Name;
+	public void SetNextActivityByType( Type type ) => NextActivity = type.Name;
+	public void SetNextActivityByTypeName( string type ) => NextActivity = type;
 
 	public void AddActivity( Activity activity )
 	{

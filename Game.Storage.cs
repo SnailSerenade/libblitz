@@ -18,7 +18,7 @@ public class GameData : IGameData
 	public int TurnsLeft { get; set; }
 	public GameStatus Status { get; set; }
 	public Guid CurrentTurnPlayer { get; set; }
-	public string RequestedActivity { get; set; }
+	public string NextActivity { get; set; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
@@ -109,6 +109,13 @@ public abstract partial class Game : Sandbox.Game, IGameData
 		Log.Info( gameData.Uid );
 		Log.Info( gameData.DisplayName );
 		StorageUtil.SelectCopyTo( gameData, this );
+
+		// Set current activity
+		if ( NextActivity != null )
+		{
+			Log.Info( $"Save contains activity request: {NextActivity}" );
+			SetActivityByTypeName( NextActivity );
+		}
 
 		// Debug log
 		Log.Info( $"Loaded game data from {uid}" );
