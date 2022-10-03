@@ -22,7 +22,7 @@ public class GameData : IGameData
 
 public abstract partial class Game : Sandbox.Game, IGameData
 {
-	public const string StorageLocation = "libblitz/games_v001";
+	public const string StorageLocation = "libblitz/games_v002";
 	public const string GameDataName = "game.lblitz";
 	public BaseFileSystem GameStorage { get; private set; }
 	public BaseFileSystem PlayerStorage { get; private set; }
