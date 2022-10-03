@@ -41,6 +41,11 @@ public interface IGameData
 	/// Unique ID of player that is having their turn
 	/// </summary>
 	public Guid CurrentTurnPlayer { get; }
+
+	/// <summary>
+	/// Activity to (maybe) use when restarting the gamemode
+	/// </summary>
+	public string RequestedActivity { get; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
@@ -75,4 +80,8 @@ public abstract partial class Game : Sandbox.Game, IGameData
 	[SelectCopyIncluded]
 	[Net]
 	public Guid CurrentTurnPlayer { get; set; }
+
+	[SelectCopyIncluded]
+	// [Net] // todo: does this have to be networked?
+	public string RequestedActivity { get; set; }
 }
