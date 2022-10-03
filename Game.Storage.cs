@@ -15,6 +15,7 @@ public class GameData : IGameData
 	public Guid Uid { get; set; }
 	public string DisplayName { get; set; }
 	public ActivityResult PreviousActivityResult { get; set; }
+	public int TurnsLeft { get; set; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData

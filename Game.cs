@@ -26,6 +26,11 @@ public interface IGameData
 	/// Result of the previous activity to run
 	/// </summary>
 	public ActivityResult PreviousActivityResult { get; }
+
+	/// <summary>
+	/// Amount of turns left for this game
+	/// </summary>
+	public int TurnsLeft { get; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
@@ -52,4 +57,8 @@ public abstract partial class Game : Sandbox.Game, IGameData
 	[SelectCopyIncluded]
 	[Net]
 	public IList<Player> Players { get; private set; }
+
+	[SelectCopyIncluded]
+	[Net]
+	public int TurnsLeft { get; private set; }
 }
