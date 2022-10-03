@@ -36,6 +36,11 @@ public interface IGameData
 	/// Current status of the game (in progress, complete, etc.)
 	/// </summary>
 	public GameStatus Status { get; }
+
+	/// <summary>
+	/// Unique ID of player that is having their turn
+	/// </summary>
+	public Guid CurrentTurnPlayer { get; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
@@ -66,4 +71,8 @@ public abstract partial class Game : Sandbox.Game, IGameData
 	[SelectCopyIncluded]
 	[Net]
 	public int TurnsLeft { get; set; }
+
+	[SelectCopyIncluded]
+	[Net]
+	public Guid CurrentTurnPlayer { get; set; }
 }

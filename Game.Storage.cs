@@ -16,7 +16,8 @@ public class GameData : IGameData
 	public string DisplayName { get; set; }
 	public ActivityResult PreviousActivityResult { get; set; }
 	public int TurnsLeft { get; set; }
-	public GameStatus Status { get; private set; }
+	public GameStatus Status { get; set; }
+	public Guid CurrentTurnPlayer { get; set; }
 }
 
 public abstract partial class Game : Sandbox.Game, IGameData
