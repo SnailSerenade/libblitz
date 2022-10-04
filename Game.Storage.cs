@@ -112,12 +112,6 @@ public abstract partial class Game : Sandbox.Game, IGameData
 		Log.Info( gameData.DisplayName );
 		StorageUtil.SelectCopyTo( gameData, this );
 
-		// Load activity data
-		foreach ( var activity in Activities )
-		{
-			activity.Load();
-		}
-
 		// Set current activity
 		if ( NextActivity != null )
 		{
@@ -128,33 +122,6 @@ public abstract partial class Game : Sandbox.Game, IGameData
 		// Debug log
 		Log.Info( $"Loaded game data from {uid}" );
 		DebugOverlay.ScreenText( "Loaded!", Vector2.One * 20, 0, Color.Cyan, 3.0f );
-	}
-
-	/// <summary>
-	/// Load storage for a single activity
-	/// </summary>
-	/// <param name="activity">Activity</param>
-	/// <returns>Object</returns>
-	/// <exception cref="Exception">On read failure</exception>
-	public object LoadPerActivityStorage( Activity activity )
-	{
-		if ( GameStorage == null )
-		{
-			Log.Warning( "Can't load activity storage while game storage hasn't initialized" );
-			return null;
-		}
-
-		try
-		{
-			return GameStorage.ReadJson<object>(
-				$"{activity.GetType().Name}{ActivityDataExtension}"
-			);
-		}
-		catch ( Exception e )
-		{
-			Log.Error( e );
-			throw new Exception( $"Failed to read activity data for {activity.GetType().Name}" );
-		}
 	}
 
 	/// <summary>
@@ -191,39 +158,6 @@ public abstract partial class Game : Sandbox.Game, IGameData
 			player.Save();
 		}
 
-		// Write activity data
-		foreach ( var activity in Activities )
-		{
-			activity.Save();
-		}
-
 		DebugOverlay.ScreenText( "Saved!", Vector2.One * 20, 1, Color.Cyan, 3.0f );
-	}
-
-	/// <summary>
-	/// Save storage for a single activity
-	/// </summary>
-	/// <param name="activity">Activity</param>
-	/// <exception cref="Exception">On write failure</exception>
-	public void SavePerActivityStorage( Activity activity )
-	{
-		if ( GameStorage == null )
-		{
-			Log.Warning( "Can't save activity storage while game storage hasn't initialized" );
-			return;
-		}
-
-		try
-		{
-			GameStorage.WriteJson(
-				$"{activity.GetType().Name}{ActivityDataExtension}",
-				activity.Storage
-			);
-		}
-		catch ( Exception e )
-		{
-			Log.Error( e );
-			throw new Exception( $"Failed to write activity data for {activity.GetType().Name}" );
-		}
 	}
 }

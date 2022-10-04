@@ -66,7 +66,6 @@ public abstract partial class Activity : Entity, IActivity
 
 	public abstract Type PawnType { get; }
 	public abstract Type HudPanelType { get; }
-	public virtual object Storage { get; set; } = null;
 
 	public bool PreparedForActivityActive = true;
 	public bool PreparedForInitialize = true;
@@ -79,32 +78,6 @@ public abstract partial class Activity : Entity, IActivity
 			Log.Info( "Using player list from game!" );
 
 		Players = players ?? Game.Current.Players;
-
-		if ( Host.IsServer )
-			Load();
-	}
-
-	public void Load()
-	{
-		if ( Storage == null )
-		{
-			Log.Info( $"Skipping load of activity {GetType().Name} storage" );
-			return;
-		}
-		var data = Game.Current.LoadPerActivityStorage( this );
-		if ( data != null )
-			Storage = data;
-	}
-
-	public void Save()
-	{
-		if ( Storage == null )
-		{
-			Log.Info( $"Skipping write of activity {GetType().Name} storage" );
-			return;
-		}
-
-		Game.Current.SavePerActivityStorage( this );
 	}
 
 	[ClientRpc]
