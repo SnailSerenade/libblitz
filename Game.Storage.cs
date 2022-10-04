@@ -138,6 +138,12 @@ public abstract partial class Game : Sandbox.Game, IGameData
 	/// <exception cref="Exception">On read failure</exception>
 	public object LoadPerActivityStorage( Activity activity )
 	{
+		if ( GameStorage == null )
+		{
+			Log.Warning( "Can't load activity storage while game storage hasn't initialized" );
+			return null;
+		}
+
 		try
 		{
 			return GameStorage.ReadJson<object>(
@@ -201,6 +207,12 @@ public abstract partial class Game : Sandbox.Game, IGameData
 	/// <exception cref="Exception">On write failure</exception>
 	public void SavePerActivityStorage( Activity activity )
 	{
+		if ( GameStorage == null )
+		{
+			Log.Warning( "Can't save activity storage while game storage hasn't initialized" );
+			return;
+		}
+
 		try
 		{
 			GameStorage.WriteJson(
