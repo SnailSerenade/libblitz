@@ -21,12 +21,9 @@ public abstract partial class Game
 	public IList<Sandbox.UI.Panel> Panels { get; } = new List<Sandbox.UI.Panel>();
 
 	[JsonIgnore]
-	private Sandbox.UI.Panel InternalPanel { get; set; }
-
-	[JsonIgnore]
 	public Sandbox.UI.Panel Panel
 	{
-		get => InternalPanel;
+		get => RootPanel;
 		set => SetPanel( value );
 	}
 
@@ -35,7 +32,7 @@ public abstract partial class Game
 		// Compare: does the Panels list already contain this panel?
 		if ( Panels.Contains( panel ) )
 		{
-			Log.Error( $"Tried to add existing panel! {panel.GetType().Name}" );
+			Log.Warning( $"Tried to add existing panel! {panel.GetType().Name}" );
 			return;
 		}
 
@@ -53,42 +50,35 @@ public abstract partial class Game
 
 				// Replace
 				Panels[i] = panel;
+				panel.Parent = RootPanel;
 				return;
 			}
 		}
 
 		// Add entity to list if comparisons fail
 		Panels.Add( panel );
+		panel.Parent = RootPanel;
 	}
 
-	public void SetPanelByType( Type type )
+	public void RemovePanelByType( Type type )
 	{
 		if ( type == null )
-			throw new ArgumentNullException( nameof( type ), "Panel type was null" );
-		foreach ( var panel in Panels )
+			return;
+		for ( int i = Panels.Count - 1; i >= 0; i-- )
 		{
+			Sandbox.UI.Panel panel = Panels[i];
 			if ( panel.GetType() == type )
 			{
-				if ( InternalPanel != null )
-					Log.Info( $"Replacing panel {InternalPanel.GetType().Name}" );
-				InternalPanel = panel;
-				if ( InternalPanel != null )
-					InternalPanel.Parent = Hud.RootPanel;
-				return;
+				panel.Delete();
+				Panels.RemoveAt( i );
+				Log.Info( $"Removed panel of type {type.Name}" );
 			}
 		}
-		throw new KeyNotFoundException( $"Game has no panel of type {type.Name}" );
 	}
 
 	public void SetPanel( Sandbox.UI.Panel panel )
 	{
-		if ( Panels.Contains( panel ) )
-		{
-			InternalPanel = panel;
-			return;
-		}
-
+		RemovePanelByType( panel.GetType() );
 		AddPanel( panel );
-		SetPanelByType( panel.GetType() );
 	}
 }
