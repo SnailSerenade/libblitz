@@ -49,12 +49,12 @@ public interface IActivity
 	/// <summary>
 	/// Called when the activity becomes the current global activity
 	/// </summary>
-	public void ActivityActive( ActivityResult previousActivityResult );
+	public void ActivityActive( Type sender );
 
 	/// <summary>
 	/// Called when the activity is no longer the current global activity
 	/// </summary>
-	public ActivityResult ActivityDormant();
+	public void ActivityDormant();
 }
 
 public abstract partial class Activity : Entity, IActivity
@@ -66,6 +66,7 @@ public abstract partial class Activity : Entity, IActivity
 
 	public abstract Type PawnType { get; }
 	public abstract Type HudPanelType { get; }
+	public virtual object Storage { get; set; } = null;
 
 	public bool PreparedForActivityActive = true;
 	public bool PreparedForInitialize = true;
@@ -78,14 +79,38 @@ public abstract partial class Activity : Entity, IActivity
 			Log.Info( "Using player list from game!" );
 
 		Players = players ?? Game.Current.Players;
+
+		if ( Host.IsServer )
+			Load();
+	}
+
+	public void Load()
+	{
+		if ( Storage == null )
+		{
+			Log.Info( $"Skipping load of activity {GetType().Name} storage" );
+			return;
+		}
+		Storage = Game.Current.LoadPerActivityStorage( this );
+	}
+
+	public void Save()
+	{
+		if ( Storage == null )
+		{
+			Log.Info( $"Skipping write of activity {GetType().Name} storage" );
+			return;
+		}
+
+		Game.Current.SavePerActivityStorage( this );
 	}
 
 	[ClientRpc]
-	private void InternalClientActivityActive( ActivityResult previousActivityResult )
+	private void InternalClientActivityActive( Type sender )
 	{
-		ActivityActive( previousActivityResult );
+		ActivityActive( sender );
 	}
-	public virtual void ActivityActive( ActivityResult previousActivityResult )
+	public virtual void ActivityActive( Type sender )
 	{
 		if ( Host.IsServer )
 		{
@@ -109,7 +134,7 @@ public abstract partial class Activity : Entity, IActivity
 	{
 		ActivityDormant();
 	}
-	public virtual ActivityResult ActivityDormant() { return null; }
+	public virtual void ActivityDormant() { }
 
 	[ClientRpc]
 	private void InternalClientInitialize() { Initialize(); }
@@ -144,9 +169,9 @@ public abstract partial class Activity : Entity, IActivity
 			if ( PreparedForActivityActive )
 			{
 				PreparedForActivityActive = false;
-				ActivityActive( Game.Current.PreviousActivityResult );
+				ActivityActive( Game.Current.PreviousActivityType );
 				foreach ( var player in Players )
-					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityResult );
+					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityType );
 			}
 		}
 	}

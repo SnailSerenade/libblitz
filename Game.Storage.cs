@@ -14,7 +14,7 @@ public class GameData : IGameData
 {
 	public Guid Uid { get; set; }
 	public string DisplayName { get; set; }
-	public ActivityResult PreviousActivityResult { get; set; }
+	public Type PreviousActivityType { get; set; }
 	public int TurnsLeft { get; set; }
 	public GameStatus Status { get; set; }
 	public Guid CurrentTurnPlayer { get; set; }
@@ -24,7 +24,9 @@ public class GameData : IGameData
 public abstract partial class Game : Sandbox.Game, IGameData
 {
 	public const string StorageLocation = "libblitz/games_v002";
-	public const string GameDataName = "game.lblitz";
+	public const string GameDataExtension = ".lblitz";
+	public const string GameDataName = $"Game{GameDataExtension}";
+	public const string ActivityDataExtension = ".lact";
 	public BaseFileSystem GameStorage { get; private set; }
 	public BaseFileSystem PlayerStorage { get; private set; }
 
@@ -42,7 +44,7 @@ public abstract partial class Game : Sandbox.Game, IGameData
 	/// Load game state from storage
 	/// </summary>
 	/// <param name="uid"></param>
-	/// <exception cref="Exception"></exception>
+	/// <exception cref="Exception">On read failure</exception>
 	public void Load( Guid uid )
 	{
 		if ( Host.IsClient )
@@ -110,6 +112,12 @@ public abstract partial class Game : Sandbox.Game, IGameData
 		Log.Info( gameData.DisplayName );
 		StorageUtil.SelectCopyTo( gameData, this );
 
+		// Load activity data
+		foreach ( var activity in Activities )
+		{
+			activity.Load();
+		}
+
 		// Set current activity
 		if ( NextActivity != null )
 		{
@@ -119,7 +127,28 @@ public abstract partial class Game : Sandbox.Game, IGameData
 
 		// Debug log
 		Log.Info( $"Loaded game data from {uid}" );
-		DebugOverlay.ScreenText( "Loaded!", Vector2.One * 20, 0, Color.Black, 3.0f );
+		DebugOverlay.ScreenText( "Loaded!", Vector2.One * 20, 0, Color.Cyan, 3.0f );
+	}
+
+	/// <summary>
+	/// Load storage for a single activity
+	/// </summary>
+	/// <param name="activity">Activity</param>
+	/// <returns>Object</returns>
+	/// <exception cref="Exception">On read failure</exception>
+	public object LoadPerActivityStorage( Activity activity )
+	{
+		try
+		{
+			return GameStorage.ReadJson<object>(
+				$"{activity.GetType().Name}{ActivityDataExtension}"
+			);
+		}
+		catch ( Exception e )
+		{
+			Log.Error( e );
+			throw new Exception( $"Failed to read activity data for {activity.GetType().Name}" );
+		}
 	}
 
 	/// <summary>
@@ -156,6 +185,33 @@ public abstract partial class Game : Sandbox.Game, IGameData
 			player.Save();
 		}
 
-		DebugOverlay.ScreenText( "Saved!", Vector2.One * 20, 0, Color.Black, 3.0f );
+		// Write activity data
+		foreach ( var activity in Activities )
+		{
+			activity.Save();
+		}
+
+		DebugOverlay.ScreenText( "Saved!", Vector2.One * 20, 1, Color.Cyan, 3.0f );
+	}
+
+	/// <summary>
+	/// Save storage for a single activity
+	/// </summary>
+	/// <param name="activity">Activity</param>
+	/// <exception cref="Exception">On write failure</exception>
+	public void SavePerActivityStorage( Activity activity )
+	{
+		try
+		{
+			GameStorage.WriteJson(
+				$"{activity.GetType().Name}{ActivityDataExtension}",
+				activity.Storage
+			);
+		}
+		catch ( Exception e )
+		{
+			Log.Error( e );
+			throw new Exception( $"Failed to write activity data for {activity.GetType().Name}" );
+		}
 	}
 }

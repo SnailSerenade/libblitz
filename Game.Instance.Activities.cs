@@ -23,7 +23,7 @@ public abstract partial class Game
 
 	[SelectCopyIncluded]
 	[Net]
-	public ActivityResult PreviousActivityResult { get; private set; } = null;
+	public Type PreviousActivityType { get; private set; } = null;
 
 	[JsonIgnore]
 	public Activity Activity
@@ -33,7 +33,8 @@ public abstract partial class Game
 		{
 			if ( InternalActivity != null )
 			{
-				PreviousActivityResult = InternalActivity.ActivityDormant();
+				PreviousActivityType = InternalActivity.GetType();
+				InternalActivity.ActivityDormant();
 				InternalActivity.CallClientActivityDormant();
 			}
 			InternalActivity = value;
@@ -45,13 +46,7 @@ public abstract partial class Game
 		}
 	}
 
-	public Activity GetActivityByType<T>()
-	{
-		foreach ( var activity in Activities )
-			if ( activity.GetType() == typeof( T ) )
-				return activity;
-		throw new KeyNotFoundException( $"Activity type {typeof( T ).Name} not found." );
-	}
+	public Activity GetActivityByType<T>() => GetActivityByType( typeof( T ) );
 	public Activity GetActivityByType( Type type )
 	{
 		if ( type == null )
