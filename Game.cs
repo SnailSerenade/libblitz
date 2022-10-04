@@ -28,6 +28,11 @@ public interface IGameData
 	public string PreviousActivityType { get; }
 
 	/// <summary>
+	/// Result of activity before current one
+	/// </summary>
+	public string PreviousActivityResult { get; }
+
+	/// <summary>
 	/// Amount of turns left for this game
 	/// </summary>
 	public int TurnsLeft { get; }

@@ -49,12 +49,12 @@ public interface IActivity
 	/// <summary>
 	/// Called when the activity becomes the current global activity
 	/// </summary>
-	public void ActivityActive( string previousActivityName );
+	public void ActivityActive( string previous, string result );
 
 	/// <summary>
 	/// Called when the activity is no longer the current global activity
 	/// </summary>
-	public void ActivityDormant();
+	public string ActivityDormant();
 }
 
 public abstract partial class Activity : Entity, IActivity
@@ -81,11 +81,11 @@ public abstract partial class Activity : Entity, IActivity
 	}
 
 	[ClientRpc]
-	private void InternalClientActivityActive( string previousActivityName )
+	private void InternalClientActivityActive( string previous, string result )
 	{
-		ActivityActive( previousActivityName );
+		ActivityActive( previous, result );
 	}
-	public virtual void ActivityActive( string previousActivityName )
+	public virtual void ActivityActive( string previous, string result )
 	{
 		if ( Host.IsServer )
 		{
@@ -109,7 +109,7 @@ public abstract partial class Activity : Entity, IActivity
 	{
 		ActivityDormant();
 	}
-	public virtual void ActivityDormant() { }
+	public virtual string ActivityDormant() { return null; }
 
 	[ClientRpc]
 	private void InternalClientInitialize() { Initialize(); }
@@ -144,9 +144,9 @@ public abstract partial class Activity : Entity, IActivity
 			if ( PreparedForActivityActive )
 			{
 				PreparedForActivityActive = false;
-				ActivityActive( Game.Current.PreviousActivityType );
+				ActivityActive( Game.Current.PreviousActivityType, Game.Current.PreviousActivityResult );
 				foreach ( var player in Players )
-					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityType );
+					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityType, Game.Current.PreviousActivityResult );
 			}
 		}
 	}

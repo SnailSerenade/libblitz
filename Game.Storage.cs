@@ -15,6 +15,7 @@ public class GameData : IGameData
 	public Guid Uid { get; set; }
 	public string DisplayName { get; set; }
 	public string PreviousActivityType { get; set; }
+	public string PreviousActivityResult { get; set; }
 	public int TurnsLeft { get; set; }
 	public GameStatus Status { get; set; }
 	public Guid CurrentTurnPlayer { get; set; }
