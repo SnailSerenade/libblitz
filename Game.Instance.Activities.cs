@@ -31,6 +31,8 @@ public abstract partial class Game
 		get => InternalActivity;
 		set
 		{
+			if ( Host.IsClient )
+				return;
 			if ( InternalActivity != null )
 			{
 				PreviousActivityType = InternalActivity.GetType().Name;
