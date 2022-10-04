@@ -40,4 +40,16 @@ public abstract partial class Game
 
 		Activity?.PlayerChange();
 	}
+
+	public override void Simulate( Client cl )
+	{
+		base.Simulate( cl );
+		Activity?.Simulate( cl );
+	}
+
+	public override void FrameSimulate( Client cl )
+	{
+		base.FrameSimulate( cl );
+		Activity?.FrameSimulate( cl );
+	}
 }
