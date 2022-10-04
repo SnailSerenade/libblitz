@@ -23,7 +23,7 @@ public abstract partial class Game
 
 	[SelectCopyIncluded]
 	[Net]
-	public Type PreviousActivityType { get; private set; } = null;
+	public string PreviousActivityType { get; private set; } = null;
 
 	[JsonIgnore]
 	public Activity Activity
@@ -33,7 +33,7 @@ public abstract partial class Game
 		{
 			if ( InternalActivity != null )
 			{
-				PreviousActivityType = InternalActivity.GetType();
+				PreviousActivityType = InternalActivity.GetType().Name;
 				InternalActivity.ActivityDormant();
 				InternalActivity.CallClientActivityDormant();
 			}

@@ -23,9 +23,9 @@ public interface IGameData
 	public string DisplayName { get; set; }
 
 	/// <summary>
-	/// Type of activity before current one
+	/// Type (name) of activity before current one
 	/// </summary>
-	public Type PreviousActivityType { get; }
+	public string PreviousActivityType { get; }
 
 	/// <summary>
 	/// Amount of turns left for this game

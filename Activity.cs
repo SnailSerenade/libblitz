@@ -49,7 +49,7 @@ public interface IActivity
 	/// <summary>
 	/// Called when the activity becomes the current global activity
 	/// </summary>
-	public void ActivityActive( Type sender );
+	public void ActivityActive( string previousActivityName );
 
 	/// <summary>
 	/// Called when the activity is no longer the current global activity
@@ -106,11 +106,11 @@ public abstract partial class Activity : Entity, IActivity
 	}
 
 	[ClientRpc]
-	private void InternalClientActivityActive( Type sender )
+	private void InternalClientActivityActive( string previousActivityName )
 	{
-		ActivityActive( sender );
+		ActivityActive( previousActivityName );
 	}
-	public virtual void ActivityActive( Type sender )
+	public virtual void ActivityActive( string previousActivityName )
 	{
 		if ( Host.IsServer )
 		{
