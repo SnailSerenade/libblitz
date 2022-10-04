@@ -91,7 +91,9 @@ public abstract partial class Activity : Entity, IActivity
 			Log.Info( $"Skipping load of activity {GetType().Name} storage" );
 			return;
 		}
-		Storage = Game.Current.LoadPerActivityStorage( this );
+		var data = Game.Current.LoadPerActivityStorage( this );
+		if ( data != null )
+			Storage = data;
 	}
 
 	public void Save()
