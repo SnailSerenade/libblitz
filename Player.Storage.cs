@@ -68,6 +68,12 @@ public partial class Player : Entity, IPlayerData, IPlayerGameData
 
 		// Copy player data into this player
 		StorageUtil.SelectCopyTo( data, this );
+
+		// Find client
+		foreach ( var id in PlayedBy )
+		{
+			AttemptSetClient( id );
+		}
 	}
 
 	public static Player FromGameStorage( Guid uid )

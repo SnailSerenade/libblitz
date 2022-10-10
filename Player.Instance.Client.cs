@@ -53,6 +53,21 @@ public partial class Player
 		Client = client;
 	}
 
+	/// <summary>
+	/// Attempt to allow a client to play this player using PlayerID / SteamID
+	/// </summary>
+	/// <param name="id">Client player ID</param>
+	public void AttemptSetClient( long id )
+	{
+		if ( !PlayedBy.Contains( id ) )
+			PlayedBy.Add( id );
+		foreach ( var client in Client.All )
+		{
+			if ( client.PlayerId == id )
+				Client = client;
+		}
+	}
+
 	private void HandleNewClient( Client client )
 	{
 		if ( Game.Current.Activity != null && !Game.Current.Activity.PreparedForInitialize )
