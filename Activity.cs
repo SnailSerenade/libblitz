@@ -98,7 +98,7 @@ public abstract partial class Activity : Entity, IActivity
 	// This 3 layered ActivityDormant is certainly annoying...
 	public void CallClientActivityDormant()
 	{
-		foreach ( var player in Players )
+		foreach ( var player in Game.Current.Players )
 		{
 			if ( player.Client != null )
 				InternalClientActivityDormant( To.Single( player.Client ) );
@@ -138,14 +138,14 @@ public abstract partial class Activity : Entity, IActivity
 			{
 				PreparedForInitialize = false;
 				Initialize();
-				foreach ( var player in Players )
+				foreach ( var player in Game.Current.Players )
 					InternalClientInitialize( To.Single( player.Client ) );
 			}
 			if ( PreparedForActivityActive )
 			{
 				PreparedForActivityActive = false;
 				ActivityActive( Game.Current.PreviousActivityType, Game.Current.PreviousActivityResult );
-				foreach ( var player in Players )
+				foreach ( var player in Game.Current.Players )
 					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityType, Game.Current.PreviousActivityResult );
 			}
 		}
