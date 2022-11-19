@@ -1,153 +1,64 @@
-/*
- * part of the BonitoBlitz (w.i.p name) gamemode
- * library used across the board gamemode & minigames
- * - lotuspar, 2022 (github.com/lotuspar)
- * this is inspired by / based on:
- * - https://github.com/Facepunch/sbox-spire/blob/main/code/Gamemodes/BaseGamemode.cs
- *     * (actually, the whole Activity system is based on the above!)
- */
-namespace libblitz;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Sandbox;
 
-public interface IActivity
+namespace libblitz;
+
+public abstract class ActivityResult : BaseNetworkable
 {
-	/// <summary>
-	/// Subset of the global Player list
-	/// </summary>
-	public IList<Player> Players { get; }
+	public string Name => GetType().Name;
 
-	public Type PawnType { get; }
-	public Type HudPanelType { get; }
-
-	/// <summary>
-	/// Called when all players are ready.
-	/// </summary>
-	public void Initialize();
-
-	/// <summary>
-	/// Called on every Game.Simulate
-	/// "Called when simulating as part of a player's tick. Like if it's a pawn."
-	/// </summary>
-	/// <param name="cl">Client</param>
-	public void Simulate( Client cl );
-
-	/// <summary>
-	/// Called on every Game.FrameSimulate
-	/// "Called each frame clientside only on Pawn (and anything the pawn decides to call it on)"
-	/// </summary>
-	/// <param name="cl">Client</param>
-	public void FrameSimulate( Client cl );
-
-	/// <summary>
-	/// Called when a player (libblitz.Player) has lost / gained a client
-	/// </summary>
-	public void PlayerChange();
-
-	/// <summary>
-	/// Called when the activity becomes the current global activity
-	/// </summary>
-	public void ActivityActive( string previous, string result );
-
-	/// <summary>
-	/// Called when the activity is no longer the current global activity
-	/// </summary>
-	public string ActivityDormant();
+	public abstract string Serialize();
+	public abstract T Deserialize<T>( string data );
 }
 
-public abstract partial class Activity : Entity, IActivity
+public abstract class BaseActivity : BaseNetworkable
 {
-	public static Activity Current => Game.Current.Activity;
+	[Net] public Guid Uid { get; init; }
 
-	[Net]
-	public IList<Player> Players { get; private set; }
+	[Net] private List<GameMember> InternalMembers { get; init; }
+	public ReadOnlyCollection<GameMember> Members => InternalMembers.AsReadOnly();
 
-	public abstract Type PawnType { get; }
-	public abstract Type HudPanelType { get; }
+	public Type ResultType { get; init; }
 
-	public bool PreparedForActivityActive = true;
-	public bool PreparedForInitialize = true;
-
-	public Activity( IList<Player> players )
+	protected BaseActivity( List<GameMember> members, Type resultType )
 	{
-		Transmit = TransmitType.Always;
-
-		if ( players == null && Host.IsServer )
-			Log.Info( "Using player list from game!" );
-
-		Players = players ?? Game.Current.Players;
+		InternalMembers = members;
+		ResultType = resultType;
+		Uid = Guid.NewGuid();
 	}
 
-	[ClientRpc]
-	private void InternalClientActivityActive( string previous, string result )
+	protected BaseActivity( Type resultType )
 	{
-		ActivityActive( previous, result );
+		ResultType = resultType;
+		Uid = Guid.NewGuid();
 	}
-	public virtual void ActivityActive( string previous, string result )
+}
+
+public class Activity<TResult> : BaseActivity
+{
+	protected Activity( List<GameMember> members ) : base( members, typeof(TResult) )
 	{
-		if ( Host.IsServer )
+	}
+
+	protected Activity() : base( typeof(TResult) )
+	{
+	}
+}
+
+public class BoardActivity : Activity<BoardActivity.Result>
+{
+	public class Result : ActivityResult
+	{
+		public override string Serialize()
 		{
-			if ( PawnType != null )
-				foreach ( var player in Players )
-					player.SetPawnByType( PawnType );
-		}
-	}
-
-	// This 3 layered ActivityDormant is certainly annoying...
-	public void CallClientActivityDormant()
-	{
-		foreach ( var player in Game.Current.Players )
-		{
-			if ( player.Client != null )
-				InternalClientActivityDormant( To.Single( player.Client ) );
-		}
-	}
-	[ClientRpc]
-	private void InternalClientActivityDormant()
-	{
-		ActivityDormant();
-	}
-	public virtual string ActivityDormant() { return null; }
-
-	[ClientRpc]
-	private void InternalClientInitialize() { Initialize(); }
-	public virtual void Initialize() { }
-
-	public virtual void PlayerChange()
-	{
-		AttemptStateUpdate();
-	}
-
-	public virtual void AttemptStateUpdate()
-	{
-		if ( Players.Count == 0 )
-			return;
-
-		bool ready = true;
-		foreach ( var player in Players )
-		{
-			if ( player.Client == null )
-				ready = false;
+			throw new NotImplementedException();
 		}
 
-		if ( ready )
+		public override T Deserialize<T>( string data )
 		{
-			if ( PreparedForInitialize )
-			{
-				PreparedForInitialize = false;
-				Initialize();
-				foreach ( var player in Game.Current.Players )
-					InternalClientInitialize( To.Single( player.Client ) );
-			}
-			if ( PreparedForActivityActive )
-			{
-				PreparedForActivityActive = false;
-				ActivityActive( Game.Current.PreviousActivityType, Game.Current.PreviousActivityResult );
-				foreach ( var player in Game.Current.Players )
-					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityType, Game.Current.PreviousActivityResult );
-			}
+			throw new NotImplementedException();
 		}
 	}
 }
