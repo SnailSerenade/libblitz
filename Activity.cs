@@ -29,14 +29,17 @@ public abstract class BaseActivity : BaseNetworkable
 	// todo: OPTIMIZE!!!!
 	public IEnumerable<GameMember> Actors => Game.Current.Members.Where( v => ActorUids.Contains( v.Uid ) );
 
-	public Type ResultType { get; init; }
-
 	/// <summary>
 	/// Whether or not the activity instance should be deleted after switching to a different activity
 	/// </summary>
 	public virtual bool KeepAlive => false;
 
-	protected BaseActivity( List<GameMember> actors, Type resultType )
+	protected BaseActivity()
+	{
+		Uid = Guid.NewGuid();
+	}
+
+	protected BaseActivity( List<GameMember> actors )
 	{
 		foreach ( var actor in actors )
 		{
@@ -44,11 +47,10 @@ public abstract class BaseActivity : BaseNetworkable
 			ActorUids.Add( actor.Uid );
 		}
 
-		ResultType = resultType;
 		Uid = Guid.NewGuid();
 	}
 
-	protected BaseActivity( List<GameMember> actors, List<GameMember> spectators, Type resultType )
+	protected BaseActivity( List<GameMember> actors, List<GameMember> spectators )
 	{
 		foreach ( var actor in actors )
 		{
@@ -61,11 +63,10 @@ public abstract class BaseActivity : BaseNetworkable
 			MemberUids.Add( spectator.Uid );
 		}
 
-		ResultType = resultType;
 		Uid = Guid.NewGuid();
 	}
 
-	protected BaseActivity( Guid uid, IEnumerable<Guid> actorUids, IEnumerable<Guid> memberUids, Type resultType )
+	protected BaseActivity( Guid uid, IEnumerable<Guid> actorUids, IEnumerable<Guid> memberUids )
 	{
 		foreach ( var actor in actorUids )
 		{
@@ -77,14 +78,7 @@ public abstract class BaseActivity : BaseNetworkable
 			MemberUids.Add( member );
 		}
 
-		ResultType = resultType;
 		Uid = uid;
-	}
-
-	protected BaseActivity( Type resultType )
-	{
-		ResultType = resultType;
-		Uid = Guid.NewGuid();
 	}
 
 	public ActivityDescription CreateDescription() =>
@@ -102,23 +96,22 @@ public abstract class BaseActivity : BaseNetworkable
 	public virtual void FrameSimulate( Client cl ) { }
 }
 
-public class Activity<TResult> : BaseActivity
+public class Activity : BaseActivity
 {
-	protected Activity( List<GameMember> actors ) : base( actors, typeof(TResult) )
+	protected Activity( List<GameMember> actors ) : base( actors )
 	{
 	}
 
-	protected Activity( List<GameMember> actors, List<GameMember> spectators ) : base( actors, spectators,
-		typeof(TResult) )
+	protected Activity( List<GameMember> actors, List<GameMember> spectators ) : base( actors, spectators )
 	{
 	}
 
-	public Activity( ActivityDescription description ) : base( description.Uid, description.ActorUids,
-		description.MemberUids, typeof(TResult) )
+	protected Activity( ActivityDescription description ) : base( description.Uid, description.ActorUids,
+		description.MemberUids )
 	{
 	}
 
-	protected Activity() : base( typeof(TResult) )
+	protected Activity()
 	{
 	}
 }
