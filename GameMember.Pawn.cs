@@ -5,14 +5,14 @@ namespace libblitz;
 
 public partial class GameMember
 {
-	[Net] public List<Entity> Pawns { get; init; }
+	[Net] public List<Entity> Pawns { get; } = new();
 
 	/// <summary>
 	/// Get or create new instance of provided type pawn 
 	/// </summary>
 	/// <typeparam name="T">Pawn type</typeparam>
 	/// <returns>Existing or new pawn on server, Existing pawn or null on client</returns>
-	public T GetOrCreatePawn<T>( object[] args ) where T : Entity, new()
+	public T GetOrCreatePawn<T>( object[] args = null ) where T : Entity, new()
 	{
 		foreach ( var entity in Pawns )
 		{
@@ -32,5 +32,16 @@ public partial class GameMember
 			Pawns.Add( pawn );
 			return pawn;
 		}
+	}
+
+	public void UsePawn( Entity entity )
+	{
+		if ( CurrentClient == null )
+		{
+			return;
+		}
+
+		Log.Info( "SETTING. YAHOO!" );
+		CurrentClient.Pawn = entity;
 	}
 }

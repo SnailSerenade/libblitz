@@ -26,12 +26,25 @@ public partial class ActivityDescription : BaseNetworkable
 	[Net]
 	public List<Guid> MemberUids { get; set; }
 
+	public IEnumerable<GameMember> Members
+	{
+		get => Game.Current.Members.Where( v => MemberUids.Contains( v.Uid ) );
+		set => MemberUids = value.Select( v => v.Uid ).ToList();
+	}
+
 	/// <summary>
 	/// Activity acting members.
 	/// Doesn't include spectators.
 	/// </summary>
 	[Net]
 	public List<Guid> ActorUids { get; set; }
+
+	public IEnumerable<GameMember> Actors
+	{
+		get => Game.Current.Members.Where( v => ActorUids.Contains( v.Uid ) );
+		set => ActorUids = value.Select( v => v.Uid ).ToList();
+	}
+
 
 	/// <summary>
 	/// Get <see cref="BaseActivity"/> from the Game activity list

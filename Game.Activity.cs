@@ -52,6 +52,54 @@ public partial class Game
 	}
 
 	/// <summary>
+	/// Remove current activity if required
+	/// </summary>
+	protected void RemoveInactiveActivities()
+	{
+		for ( var i = Activities.Count - 1; i >= 0; i-- )
+		{
+			var activity = Activities[i];
+			if ( activity.KeepAlive )
+				continue;
+
+			if ( ActivityStack.Any( v => v.Uid == activity.Uid ) )
+			{
+				continue;
+			}
+
+			Activities[i].ActivityEnd();
+			Activities.RemoveAt( i );
+		}
+	}
+
+	/// <summary>
+	/// Just remove current activity (stack) from main Activities list
+	/// todo: optimize this
+	/// </summary>
+	protected void RemoveCurrentActivity()
+	{
+		if ( ActivityStack.Count == 0 )
+		{
+			return;
+		}
+
+		var description = ActivityStack.Last();
+		var activity = description?.Activity;
+		if ( activity == null )
+		{
+			return;
+		}
+
+		if ( activity.KeepAlive )
+		{
+			return;
+		}
+
+		activity.ActivityEnd();
+		Activities.Remove( activity );
+	}
+
+	/// <summary>
 	/// Use provided <see cref="BaseActivity"/> and activate it with provided result.
 	/// The result (<see cref="ActivityResult"/>) should be provided by the previous activity.
 	/// </summary>
@@ -66,6 +114,8 @@ public partial class Game
 		{
 			throw new InvalidOperationException( "Activity instance already contained in list" );
 		}
+
+		RemoveCurrentActivity();
 
 		Activities.Add( activity );
 		ActivityStack.Add( activity.CreateDescription() );
@@ -92,6 +142,8 @@ public partial class Game
 		{
 			throw new InvalidOperationException( "Activity instance already contained in list" );
 		}
+
+		RemoveCurrentActivity();
 
 		Activities.Add( description.CreateInstance<BaseActivity>() );
 		ActivityStack.Add( description );

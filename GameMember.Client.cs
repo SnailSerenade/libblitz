@@ -68,10 +68,16 @@ public partial class GameMember
 					continue;
 				}
 
-				if ( ClientIds.Contains( client.GetSteamId() ) )
+				Log.Info( client );
+
+				if ( !ClientIds.Contains( client.GetSteamId() ) )
 				{
-					CurrentClient = client;
+					continue;
 				}
+
+				Log.Info( "setting client" );
+				CurrentClient = client;
+				return;
 			}
 		}
 

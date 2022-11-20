@@ -41,8 +41,9 @@ public partial class Game
 	{
 		base.Simulate( cl );
 
-		foreach ( var activity in Activities )
+		for ( var i = Activities.Count - 1; i >= 0; i-- )
 		{
+			var activity = Activities[i];
 			activity.Simulate( cl );
 		}
 	}
@@ -51,8 +52,9 @@ public partial class Game
 	{
 		base.FrameSimulate( cl );
 
-		foreach ( var activity in Activities )
+		for ( var i = Activities.Count - 1; i >= 0; i-- )
 		{
+			var activity = Activities[i];
 			activity.FrameSimulate( cl );
 		}
 	}
