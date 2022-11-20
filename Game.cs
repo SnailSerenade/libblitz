@@ -5,21 +5,20 @@ using Sandbox.UI;
 
 namespace libblitz;
 
-public partial class Game : Sandbox.Game
+public abstract partial class Game : Sandbox.Game
 {
-	public new static Sandbox.Game Current => Sandbox.Game.Current as Sandbox.Game;
+	public new static Game Current => Sandbox.Game.Current as Game;
 
-	[Net] public Guid Uid { get; private set; }
-	[Net] public List<GameMember> Members { get; private set; }
-	[Net] public List<BaseActivity> Activities { get; init; }
+	[Net] public Guid Uid { get; }
+	[Net] public List<GameMember> Members { get; } = new();
 
-	public Game()
+	protected Game()
 	{
-		Activities = new List<BaseActivity>();
-
 		if ( Host.IsClient )
 		{
 			Local.Hud = new RootPanel();
 		}
+
+		Uid = Guid.NewGuid();
 	}
 }

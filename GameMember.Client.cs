@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using Sandbox;
 
 namespace libblitz;
 
 public partial class GameMember
 {
-	[Net] private List<long> ClientIds { get; set; }
+	[Net] public List<long> ClientIds { get; set; }
 	[Net] private Client CurrentClient { get; set; }
+	public new Client Client => CurrentClient;
 
 	/// <summary>
-	/// Allow a client to play as this GameMember
+	/// Allow a client to play as this GameMember and set if possible
 	/// </summary>
 	/// <param name="client">Client</param>
 	public void AddClient( Client client )
@@ -29,10 +28,34 @@ public partial class GameMember
 	}
 
 	/// <summary>
+	/// Allow a client to play as this GameMember
+	/// </summary>
+	/// <param name="clientId">Client ID (Steam ID)</param>
+	public void AddClient( long clientId )
+	{
+		Host.AssertServer();
+
+		if ( ClientIds.Contains( clientId ) )
+		{
+			return;
+		}
+
+		ClientIds.Add( clientId );
+
+		UpdateCurrentClient( false );
+	}
+
+	public void HandleClientDisconnect( Client cl )
+	{
+		if ( cl == CurrentClient )
+			CurrentClient = null;
+	}
+
+	/// <summary>
 	/// Set CurrentClient based on known clients
 	/// </summary>
 	/// <param name="allowBot">Can UpdateCurrentClient create a bot if required?</param>
-	private void UpdateCurrentClient( bool allowBot = true )
+	public void UpdateCurrentClient( bool allowBot = true )
 	{
 		Host.AssertServer();
 

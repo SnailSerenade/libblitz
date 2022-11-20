@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Sandbox;
 
 namespace libblitz;
 
 public partial class GameMember
 {
-	[Net] public List<Guid> ActivityStack { get; set; }
+	[Net] 
+	public List<Guid> ActivityStack { get; set; }
+
+	[Net] 
+	public BaseActivity CurrentActivity { get; set; }
 
 	public void JoinActivity( BaseActivity activity )
 	{
@@ -23,3 +28,8 @@ public partial class GameMember
 		(ActivityStack as IList<Guid>).RemoveAt( ActivityStack.Count - 1 );
 	}
 }
+
+
+
+
+

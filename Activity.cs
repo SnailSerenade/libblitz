@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text.Json;
 using Sandbox;
 
 namespace libblitz;
@@ -9,24 +11,74 @@ public abstract class ActivityResult : BaseNetworkable
 {
 	public string Name => GetType().Name;
 
-	public abstract string Serialize();
-	public abstract T Deserialize<T>( string data );
+	public virtual string Serialize() => JsonSerializer.Serialize( this );
+	public virtual T Deserialize<T>( string data ) where T : ActivityResult => JsonSerializer.Deserialize<T>( data );
 }
 
 public abstract class BaseActivity : BaseNetworkable
 {
 	[Net] public Guid Uid { get; init; }
 
-	[Net] private List<GameMember> InternalMembers { get; init; }
-	public ReadOnlyCollection<GameMember> Members => InternalMembers.AsReadOnly();
+	[Net] private List<Guid> MemberUids { get; init; } = new();
+
+	// todo: OPTIMIZE!!!!
+	public IEnumerable<GameMember> Members => Game.Current.Members.Where( v => MemberUids.Contains( v.Uid ) );
+
+	[Net] private List<Guid> ActorUids { get; init; } = new();
+
+	// todo: OPTIMIZE!!!!
+	public IEnumerable<GameMember> Actors => Game.Current.Members.Where( v => ActorUids.Contains( v.Uid ) );
 
 	public Type ResultType { get; init; }
 
-	protected BaseActivity( List<GameMember> members, Type resultType )
+	/// <summary>
+	/// Whether or not the activity instance should be deleted after switching to a different activity
+	/// </summary>
+	public virtual bool KeepAlive => false;
+
+	protected BaseActivity( List<GameMember> actors, Type resultType )
 	{
-		InternalMembers = members;
+		foreach ( var actor in actors )
+		{
+			MemberUids.Add( actor.Uid );
+			ActorUids.Add( actor.Uid );
+		}
+
 		ResultType = resultType;
 		Uid = Guid.NewGuid();
+	}
+
+	protected BaseActivity( List<GameMember> actors, List<GameMember> spectators, Type resultType )
+	{
+		foreach ( var actor in actors )
+		{
+			MemberUids.Add( actor.Uid );
+			ActorUids.Add( actor.Uid );
+		}
+
+		foreach ( var spectator in spectators )
+		{
+			MemberUids.Add( spectator.Uid );
+		}
+
+		ResultType = resultType;
+		Uid = Guid.NewGuid();
+	}
+
+	protected BaseActivity( Guid uid, IEnumerable<Guid> actorUids, IEnumerable<Guid> memberUids, Type resultType )
+	{
+		foreach ( var actor in actorUids )
+		{
+			ActorUids.Add( actor );
+		}
+
+		foreach ( var member in memberUids )
+		{
+			MemberUids.Add( member );
+		}
+
+		ResultType = resultType;
+		Uid = uid;
 	}
 
 	protected BaseActivity( Type resultType )
@@ -34,11 +86,35 @@ public abstract class BaseActivity : BaseNetworkable
 		ResultType = resultType;
 		Uid = Guid.NewGuid();
 	}
+
+	public ActivityDescription CreateDescription() =>
+		new()
+		{
+			ActorUids = ActorUids, MemberUids = MemberUids, Name = GetType().Name, Uid = Uid,
+		};
+
+	public virtual void ActivityStart( ActivityResult result ) { }
+	public virtual void ActivityEnd() { }
+
+	public virtual void MemberConnect( Client cl ) { }
+	public virtual void MemberDisconnect( Client cl, NetworkDisconnectionReason reason ) { }
+	public virtual void Simulate( Client cl ) { }
+	public virtual void FrameSimulate( Client cl ) { }
 }
 
 public class Activity<TResult> : BaseActivity
 {
-	protected Activity( List<GameMember> members ) : base( members, typeof(TResult) )
+	protected Activity( List<GameMember> actors ) : base( actors, typeof(TResult) )
+	{
+	}
+
+	protected Activity( List<GameMember> actors, List<GameMember> spectators ) : base( actors, spectators,
+		typeof(TResult) )
+	{
+	}
+
+	public Activity( ActivityDescription description ) : base( description.Uid, description.ActorUids,
+		description.MemberUids, typeof(TResult) )
 	{
 	}
 
@@ -47,18 +123,7 @@ public class Activity<TResult> : BaseActivity
 	}
 }
 
-public class BoardActivity : Activity<BoardActivity.Result>
+[AttributeUsage( AttributeTargets.Class )]
+public class RegisteredActivityAttribute : Attribute
 {
-	public class Result : ActivityResult
-	{
-		public override string Serialize()
-		{
-			throw new NotImplementedException();
-		}
-
-		public override T Deserialize<T>( string data )
-		{
-			throw new NotImplementedException();
-		}
-	}
 }

@@ -9,15 +9,20 @@ namespace libblitz;
 
 public partial class GameMember : Entity
 {
-	[Net] private Guid Uid { get; set; }
-	[Net] private string DisplayName { get; set; }
-	[Net] private int Coins { get; set; }
+	[Net] public Guid Uid { get; private set; }
+	[Net] public string DisplayName { get; set; }
+	[Net] public int Coins { get; set; }
 
 	public GameMember( SaveData saveData )
 	{
 		LoadSaveData( saveData );
 
-		UpdateCurrentClient( true );
+		UpdateCurrentClient( false );
+	}
+
+	public GameMember()
+	{
+		Uid = Guid.NewGuid();
 	}
 
 	public class SaveData : ISaveData
