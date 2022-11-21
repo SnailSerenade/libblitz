@@ -15,16 +15,16 @@ public abstract class ActivityResult : BaseNetworkable
 	public virtual T Deserialize<T>( string data ) where T : ActivityResult => JsonSerializer.Deserialize<T>( data );
 }
 
-public abstract class BaseActivity : BaseNetworkable
+public abstract partial class BaseActivity : BaseNetworkable
 {
-	[Net] public Guid Uid { get; init; }
+	[Net] public Guid Uid { get; private set; }
 
-	[Net] private List<Guid> MemberUids { get; init; } = new();
+	[Net] private List<Guid> MemberUids { get; set; } = new();
 
 	// todo: OPTIMIZE!!!!
 	public IEnumerable<GameMember> Members => Game.Current.Members.Where( v => MemberUids.Contains( v.Uid ) );
 
-	[Net] private List<Guid> ActorUids { get; init; } = new();
+	[Net] private List<Guid> ActorUids { get; set; } = new();
 
 	// todo: OPTIMIZE!!!!
 	public IEnumerable<GameMember> Actors => Game.Current.Members.Where( v => ActorUids.Contains( v.Uid ) );
@@ -90,6 +90,9 @@ public abstract class BaseActivity : BaseNetworkable
 	public virtual void ActivityStart( ActivityResult result ) { }
 	public virtual void ActivityEnd() { }
 
+	public virtual void ActivityClientStart() { }
+	public virtual void ActivityClientEnd() { }
+
 	public virtual void MemberConnect( Client cl ) { }
 	public virtual void MemberDisconnect( Client cl, NetworkDisconnectionReason reason ) { }
 	public virtual void Simulate( Client cl ) { }
@@ -111,9 +114,7 @@ public class Activity : BaseActivity
 	{
 	}
 
-	protected Activity()
-	{
-	}
+	protected Activity() => Host.AssertClient();
 }
 
 [AttributeUsage( AttributeTargets.Class )]

@@ -9,8 +9,8 @@ public abstract partial class Game : Sandbox.Game
 {
 	public new static Game Current => Sandbox.Game.Current as Game;
 
-	[Net] public Guid Uid { get; }
-	[Net] public List<GameMember> Members { get; } = new();
+	[Net] public Guid Uid { get; set; }
+	[Net] public List<GameMember> Members { get; set; } = new();
 
 	protected Game()
 	{
@@ -19,6 +19,7 @@ public abstract partial class Game : Sandbox.Game
 			Local.Hud = new RootPanel();
 		}
 
+		Transmit = TransmitType.Always;
 		Uid = Guid.NewGuid();
 	}
 }

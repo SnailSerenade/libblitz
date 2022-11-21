@@ -17,7 +17,7 @@ public partial class ActivityDescription : BaseNetworkable
 	/// Activity instance UID
 	/// </summary>
 	[Net]
-	public Guid Uid { get; set; }
+	public Guid Uid { get; set; } = Guid.NewGuid();
 
 	/// <summary>
 	/// Activity members / players

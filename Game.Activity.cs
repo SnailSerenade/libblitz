@@ -8,8 +8,8 @@ namespace libblitz;
 
 public partial class Game
 {
-	[Net] public List<ActivityDescription> ActivityStack { get; } = new();
-	[Net] public List<BaseActivity> Activities { get; } = new();
+	[Net] public IList<ActivityDescription> ActivityStack { get; private set; } = new List<ActivityDescription>();
+	[Net] public IList<BaseActivity> Activities { get; private set; } = new List<BaseActivity>();
 
 	private ActivityResult _activityResult;
 
@@ -47,36 +47,27 @@ public partial class Game
 			return;
 		}
 
+		Log.Info( $"calling ActivityStart for activity UID {activity.Uid},{ActivityStack.Last().Uid}" );
 		activity.ActivityStart( _activityResult );
+		ClientHandleStartActivity( activity.Uid );
 		_shouldInitActivityInstance = false;
 	}
 
 	/// <summary>
-	/// Remove current activity if required
+	/// Request activity init
 	/// </summary>
-	protected void RemoveInactiveActivities()
+	/// <param name="result">Previous activity result to pass to ActivityStart</param>
+	private void RequestActivityInit( ActivityResult result )
 	{
-		for ( var i = Activities.Count - 1; i >= 0; i-- )
-		{
-			var activity = Activities[i];
-			if ( activity.KeepAlive )
-				continue;
-
-			if ( ActivityStack.Any( v => v.Uid == activity.Uid ) )
-			{
-				continue;
-			}
-
-			Activities[i].ActivityEnd();
-			Activities.RemoveAt( i );
-		}
+		_activityResult = result;
+		_shouldInitActivityInstance = true;
 	}
 
 	/// <summary>
 	/// Just remove current activity (stack) from main Activities list
 	/// todo: optimize this
 	/// </summary>
-	protected void RemoveCurrentActivity()
+	private void RemoveCurrentActivity()
 	{
 		if ( ActivityStack.Count == 0 )
 		{
@@ -96,7 +87,34 @@ public partial class Game
 		}
 
 		activity.ActivityEnd();
+		ClientHandleEndActivity( activity.Uid );
 		Activities.Remove( activity );
+	}
+
+	[ClientRpc]
+	private void ClientHandleStartActivity( Guid activityId )
+	{
+		var activity = Activities.SingleOrDefault( v => v.Uid == activityId );
+		if ( activity == null )
+		{
+			Log.Warning( $"Client has no activity with UID {activityId}" );
+			return;
+		}
+
+		activity.ActivityClientStart();
+	}
+
+	[ClientRpc]
+	private void ClientHandleEndActivity( Guid activityId )
+	{
+		var activity = Activities.SingleOrDefault( v => v.Uid == activityId );
+		if ( activity == null )
+		{
+			Log.Warning( $"Client has no activity with UID {activityId}" );
+			return;
+		}
+
+		activity.ActivityClientEnd();
 	}
 
 	/// <summary>
@@ -115,14 +133,15 @@ public partial class Game
 			throw new InvalidOperationException( "Activity instance already contained in list" );
 		}
 
+		// Remove current activity instance from instance list if required
 		RemoveCurrentActivity();
 
+		// Create description & add activity
 		Activities.Add( activity );
 		ActivityStack.Add( activity.CreateDescription() );
 
-		_activityResult = result;
-
-		_shouldInitActivityInstance = true;
+		// Request & attempt activity init
+		RequestActivityInit( result );
 		AttemptActivityInit();
 	}
 
@@ -143,14 +162,15 @@ public partial class Game
 			throw new InvalidOperationException( "Activity instance already contained in list" );
 		}
 
+		// Remove current activity instance from instance list if required
 		RemoveCurrentActivity();
 
+		// Create & add activity
 		Activities.Add( description.CreateInstance<BaseActivity>() );
 		ActivityStack.Add( description );
 
-		_activityResult = result;
-
-		_shouldInitActivityInstance = true;
+		// Request & attempt activity init
+		RequestActivityInit( result );
 		AttemptActivityInit();
 	}
 
@@ -168,18 +188,8 @@ public partial class Game
 			throw new InvalidOperationException( "No activity to pop" );
 		}
 
-		// Call ActivityEnd on current activity
-		{
-			var current = ActivityStack.Last();
-			current.Activity.ActivityEnd();
-
-			// Remove / delete activity if required
-			if ( !current.Activity.KeepAlive )
-			{
-				Activities.Remove( current.Activity );
-				// if we ever make BaseActivity an Entity, this should call Delete
-			}
-		}
+		// Remove current activity instance from instance list if required
+		RemoveCurrentActivity();
 
 		// Remove current activity description from stack
 		ActivityStack.RemoveAt( ActivityStack.Count - 1 );
@@ -191,16 +201,18 @@ public partial class Game
 		}
 
 		// Prepare new activity
+		var current = ActivityStack.Last();
+		if ( current.Activity != null )
 		{
-			var current = ActivityStack.Last();
-			if ( current.Activity != null )
-				return;
-			var activity = current.CreateInstance<BaseActivity>();
-			Activities.Add( activity );
-
-			_shouldInitActivityInstance = true;
-			_activityResult = result;
-			AttemptActivityInit();
+			return;
 		}
+
+		// Add activity to Activities list
+		var activity = current.CreateInstance<BaseActivity>();
+		Activities.Add( activity );
+
+		// Request & attempt activity init
+		RequestActivityInit( result );
+		AttemptActivityInit();
 	}
 }

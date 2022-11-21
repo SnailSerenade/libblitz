@@ -15,6 +15,8 @@ public partial class GameMember : Entity
 
 	public GameMember( SaveData saveData )
 	{
+		Transmit = TransmitType.Always;
+
 		LoadSaveData( saveData );
 
 		UpdateCurrentClient( false );
@@ -22,6 +24,8 @@ public partial class GameMember : Entity
 
 	public GameMember()
 	{
+		Transmit = TransmitType.Always;
+
 		Uid = Guid.NewGuid();
 	}
 
