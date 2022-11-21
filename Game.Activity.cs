@@ -51,6 +51,9 @@ public partial class Game
 		activity.ActivityStart( _activityResult );
 		ClientHandleStartActivity( activity.Uid );
 		_shouldInitActivityInstance = false;
+
+		// Remove current activity instance from instance list if required
+		RemoveLastActivity();
 	}
 
 	/// <summary>
@@ -64,17 +67,22 @@ public partial class Game
 	}
 
 	/// <summary>
+	/// This function has been changed to try to fix bug #1
+	/// 
+	/// 
+	///
+	/// **Previous function description:**
 	/// Just remove current activity (stack) from main Activities list
 	/// todo: optimize this
 	/// </summary>
-	private void RemoveCurrentActivity()
+	private void RemoveLastActivity()
 	{
-		if ( ActivityStack.Count == 0 )
+		if ( ActivityStack.Count <= 1 )
 		{
 			return;
 		}
 
-		var description = ActivityStack.Last();
+		var description = ActivityStack[^2];
 		var activity = description?.Activity;
 		if ( activity == null )
 		{
@@ -89,6 +97,7 @@ public partial class Game
 		activity.ActivityEnd();
 		ClientHandleEndActivity( activity.Uid );
 		Activities.Remove( activity );
+		activity.Delete();
 	}
 
 	[ClientRpc]
@@ -133,9 +142,6 @@ public partial class Game
 			throw new InvalidOperationException( "Activity instance already contained in list" );
 		}
 
-		// Remove current activity instance from instance list if required
-		RemoveCurrentActivity();
-
 		// Create description & add activity
 		Activities.Add( activity );
 		ActivityStack.Add( activity.CreateDescription() );
@@ -162,9 +168,6 @@ public partial class Game
 			throw new InvalidOperationException( "Activity instance already contained in list" );
 		}
 
-		// Remove current activity instance from instance list if required
-		RemoveCurrentActivity();
-
 		// Create & add activity
 		Activities.Add( description.CreateInstance<BaseActivity>() );
 		ActivityStack.Add( description );
@@ -187,9 +190,6 @@ public partial class Game
 		{
 			throw new InvalidOperationException( "No activity to pop" );
 		}
-
-		// Remove current activity instance from instance list if required
-		RemoveCurrentActivity();
 
 		// Remove current activity description from stack
 		ActivityStack.RemoveAt( ActivityStack.Count - 1 );

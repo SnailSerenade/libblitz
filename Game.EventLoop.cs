@@ -44,7 +44,7 @@ public partial class Game
 		for ( var i = Activities.Count - 1; i >= 0; i-- )
 		{
 			var activity = Activities[i];
-			activity.Simulate( cl );
+			activity?.Simulate( cl );
 		}
 	}
 
@@ -55,7 +55,7 @@ public partial class Game
 		for ( var i = Activities.Count - 1; i >= 0; i-- )
 		{
 			var activity = Activities[i];
-			activity.FrameSimulate( cl );
+			activity?.FrameSimulate( cl );
 		}
 	}
 }

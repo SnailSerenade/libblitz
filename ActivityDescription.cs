@@ -5,13 +5,15 @@ using Sandbox;
 
 namespace libblitz;
 
-public partial class ActivityDescription : BaseNetworkable
+public partial class ActivityDescription : Entity
 {
+	public ActivityDescription() => Transmit = TransmitType.Always;
+
 	/// <summary>
 	/// Activity type name
 	/// </summary>
 	[Net]
-	public string Name { get; set; }
+	public new string Name { get; set; }
 
 	/// <summary>
 	/// Activity instance UID
@@ -45,7 +47,6 @@ public partial class ActivityDescription : BaseNetworkable
 		set => ActorUids = value.Select( v => v.Uid ).ToList();
 	}
 
-
 	/// <summary>
 	/// Get <see cref="BaseActivity"/> from the Game activity list
 	/// </summary>
@@ -56,7 +57,7 @@ public partial class ActivityDescription : BaseNetworkable
 	/// </summary>
 	/// <param name="name">New type name</param>
 	/// <returns>New ActivityDescription</returns>
-	public ActivityDescription Transform( string name ) => new()
+	public new ActivityDescription Transform( string name ) => new()
 	{
 		Name = name, Uid = Guid.NewGuid(), MemberUids = MemberUids.ToList(), ActorUids = ActorUids.ToList(),
 	};

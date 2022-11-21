@@ -15,7 +15,7 @@ public abstract class ActivityResult : BaseNetworkable
 	public virtual T Deserialize<T>( string data ) where T : ActivityResult => JsonSerializer.Deserialize<T>( data );
 }
 
-public abstract partial class BaseActivity : BaseNetworkable
+public abstract partial class BaseActivity : Entity
 {
 	[Net] public Guid Uid { get; private set; }
 
@@ -37,6 +37,8 @@ public abstract partial class BaseActivity : BaseNetworkable
 	protected BaseActivity()
 	{
 		Uid = Guid.NewGuid();
+
+		Transmit = TransmitType.Always;
 	}
 
 	protected BaseActivity( List<GameMember> actors )
@@ -48,6 +50,8 @@ public abstract partial class BaseActivity : BaseNetworkable
 		}
 
 		Uid = Guid.NewGuid();
+
+		Transmit = TransmitType.Always;
 	}
 
 	protected BaseActivity( List<GameMember> actors, List<GameMember> spectators )
@@ -64,6 +68,8 @@ public abstract partial class BaseActivity : BaseNetworkable
 		}
 
 		Uid = Guid.NewGuid();
+
+		Transmit = TransmitType.Always;
 	}
 
 	protected BaseActivity( Guid uid, IEnumerable<Guid> actorUids, IEnumerable<Guid> memberUids )
@@ -79,7 +85,10 @@ public abstract partial class BaseActivity : BaseNetworkable
 		}
 
 		Uid = uid;
+
+		Transmit = TransmitType.Always;
 	}
+
 
 	public ActivityDescription CreateDescription() =>
 		new()
@@ -95,8 +104,8 @@ public abstract partial class BaseActivity : BaseNetworkable
 
 	public virtual void MemberConnect( Client cl ) { }
 	public virtual void MemberDisconnect( Client cl, NetworkDisconnectionReason reason ) { }
-	public virtual void Simulate( Client cl ) { }
-	public virtual void FrameSimulate( Client cl ) { }
+	public new virtual void Simulate( Client cl ) { }
+	public new virtual void FrameSimulate( Client cl ) { }
 }
 
 public class Activity : BaseActivity
