@@ -109,13 +109,3 @@ public partial class ActivityDescription : Entity
 		return activity;
 	}
 }
-
-public class ActivityDescription<T> : ActivityDescription
-{
-	public ActivityDescription()
-	{
-		Name = typeof(T).Name;
-
-		Transmit = TransmitType.Always;
-	}
-}
