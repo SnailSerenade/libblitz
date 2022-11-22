@@ -96,6 +96,17 @@ public abstract partial class BaseActivity : Entity
 			ActorUids = ActorUids, MemberUids = MemberUids, Name = GetType().Name, Uid = Uid,
 		};
 
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+
+		if ( Host.IsClient )
+		{
+			// yep this is a bad fix but it works
+			ActivityClientEnd();
+		}
+	}
+
 	public virtual void ActivityStart( ActivityResult result ) { }
 	public virtual void ActivityEnd() { }
 
