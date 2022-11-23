@@ -53,7 +53,7 @@ public partial class Game
 		_shouldInitActivityInstance = false;
 
 		// Remove current activity instance from instance list if required
-		RemoveLastActivity();
+		CleanUnusedActivityInstances();
 	}
 
 	/// <summary>
@@ -75,29 +75,68 @@ public partial class Game
 	/// Just remove current activity (stack) from main Activities list
 	/// todo: optimize this
 	/// </summary>
-	private void RemoveLastActivity()
+	protected void CleanUnusedActivityInstances()
 	{
-		if ( ActivityStack.Count <= 1 )
+		if ( ActivityStack.Count == 0 )
 		{
 			return;
 		}
 
-		var description = ActivityStack[^2];
-		var activity = description?.Activity;
-		if ( activity == null )
+		var cleanedFromStack = 0;
+		var cleanedFromInstances = 0;
+
+		foreach ( var description in ActivityStack )
 		{
-			return;
+			var activity = description.Activity;
+
+			if ( activity == null )
+			{
+				continue;
+			}
+
+			if ( activity.KeepAlive )
+			{
+				continue;
+			}
+
+			if ( description == ActivityStack.Last() )
+			{
+				continue;
+			}
+
+			Log.Info( $"Deleting unreferenced stack activity {activity.Uid}/{activity.GetType().Name}" );
+
+			activity.ActivityEnd();
+			ClientHandleEndActivity( activity.Uid );
+			Activities.Remove( activity );
+			activity.Delete();
+
+			cleanedFromStack++;
 		}
 
-		if ( activity.KeepAlive )
+		// todo: figure out why activities can be in instance storage and not the stack?
+		for ( var i = Activities.Count - 1; i >= 0; i-- )
 		{
-			return;
+			var activity = Activities[i];
+			if ( ActivityStack.Any( v => v.Uid == activity.Uid ) )
+			{
+				continue;
+			}
+
+			Log.Info( $"Deleting unreferenced instance activity {activity.Uid}/{activity.GetType().Name}" );
+
+			activity.ActivityEnd();
+			ClientHandleEndActivity( activity.Uid );
+			Activities.RemoveAt( i );
+			activity.Delete();
+
+			cleanedFromInstances++;
 		}
 
-		activity.ActivityEnd();
-		ClientHandleEndActivity( activity.Uid );
-		Activities.Remove( activity );
-		activity.Delete();
+		if ( cleanedFromInstances != 0 || cleanedFromStack != 0 )
+		{
+			Log.Info( $"Cleaned {cleanedFromInstances} instance(s) and {cleanedFromStack} stack object(s)" );
+		}
 	}
 
 	[ClientRpc]
@@ -142,6 +181,8 @@ public partial class Game
 			throw new InvalidOperationException( "Activity instance already contained in list" );
 		}
 
+		CleanUnusedActivityInstances();
+
 		// Create description & add activity
 		Activities.Add( activity );
 		ActivityStack.Add( activity.CreateDescription() );
@@ -168,6 +209,8 @@ public partial class Game
 			throw new InvalidOperationException( "Activity instance already contained in list" );
 		}
 
+		CleanUnusedActivityInstances();
+
 		// Create & add activity
 		Activities.Add( description.CreateInstance<BaseActivity>() );
 		ActivityStack.Add( description );
@@ -190,6 +233,8 @@ public partial class Game
 		{
 			throw new InvalidOperationException( "No activity to pop" );
 		}
+
+		CleanUnusedActivityInstances();
 
 		// Remove current activity description from stack
 		ActivityStack.RemoveAt( ActivityStack.Count - 1 );
