@@ -19,12 +19,12 @@ public abstract partial class BaseActivity : Entity
 {
 	[Net] public Guid Uid { get; private set; }
 
-	[Net] private List<Guid> MemberUids { get; set; } = new();
+	[Net] private IList<Guid> MemberUids { get; set; } = new List<Guid>();
 
 	// todo: OPTIMIZE!!!!
 	public IEnumerable<GameMember> Members => Game.Current.Members.Where( v => MemberUids.Contains( v.Uid ) );
 
-	[Net] private List<Guid> ActorUids { get; set; } = new();
+	[Net] private IList<Guid> ActorUids { get; set; } = new List<Guid>();
 
 	// todo: OPTIMIZE!!!!
 	public IEnumerable<GameMember> Actors => Game.Current.Members.Where( v => ActorUids.Contains( v.Uid ) );

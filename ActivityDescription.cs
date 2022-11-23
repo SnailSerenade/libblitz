@@ -26,7 +26,7 @@ public partial class ActivityDescription : Entity
 	/// Includes spectators.
 	/// </summary>
 	[Net]
-	public List<Guid> MemberUids { get; set; }
+	public IList<Guid> MemberUids { get; set; }
 
 	public IEnumerable<GameMember> Members
 	{
@@ -39,7 +39,7 @@ public partial class ActivityDescription : Entity
 	/// Doesn't include spectators.
 	/// </summary>
 	[Net]
-	public List<Guid> ActorUids { get; set; }
+	public IList<Guid> ActorUids { get; set; }
 
 	public IEnumerable<GameMember> Actors
 	{
@@ -57,9 +57,18 @@ public partial class ActivityDescription : Entity
 	/// </summary>
 	/// <param name="name">New type name</param>
 	/// <returns>New ActivityDescription</returns>
-	public new ActivityDescription Transform( string name ) => new()
+	public new ActivityDescription Transform( string name )
 	{
-		Name = name, Uid = Guid.NewGuid(), MemberUids = MemberUids.ToList(), ActorUids = ActorUids.ToList(),
+		Log.Warning( "Depreciated Transform used" );
+		return new ActivityDescription
+		{
+			Name = name, Uid = Guid.NewGuid(), MemberUids = MemberUids.ToList(), ActorUids = ActorUids.ToList(),
+		};
+	}
+
+	public new ActivityDescription Transform<T>() => new()
+	{
+		Name = typeof(T).Name, Uid = Guid.NewGuid(), MemberUids = MemberUids.ToList(), ActorUids = ActorUids.ToList(),
 	};
 
 	/// <summary>
@@ -107,5 +116,11 @@ public partial class ActivityDescription : Entity
 		}
 
 		return activity;
+	}
+
+	public static ActivityDescription For<T>()
+	{
+		var description = new ActivityDescription { Name = typeof(T).Name };
+		return description;
 	}
 }

@@ -5,7 +5,7 @@ namespace libblitz;
 
 public partial class GameMember
 {
-	[Net] public List<long> ClientIds { get; set; }
+	[Net] public IList<long> ClientIds { get; set; }
 	[Net] private Client CurrentClient { get; set; }
 	public new Client Client => CurrentClient;
 

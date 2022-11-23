@@ -5,7 +5,9 @@ namespace libblitz;
 
 public partial class GameMember
 {
-	[Net] public List<Entity> Pawns { get; } = new();
+	[Net] public IList<Entity> Pawns { get; private set; } = new List<Entity>();
+
+	public Entity Pawn => Client.Pawn;
 
 	/// <summary>
 	/// Get or create new instance of provided type pawn 
