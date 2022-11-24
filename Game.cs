@@ -1,92 +1,25 @@
-/*
- * part of the BonitoBlitz (w.i.p name) gamemode
- * library used across the board gamemode & minigames
- * - lotuspar, 2022 (github.com/lotuspar)
- */
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 using Sandbox;
+using Sandbox.UI;
 
 namespace libblitz;
 
-public interface IGameData
+public abstract partial class Game : Sandbox.Game
 {
-	/// <summary>
-	/// Unique ID for game info
-	/// </summary>
-	public Guid Uid { get; }
+	public new static Game Current => Sandbox.Game.Current as Game;
 
-	/// <summary>
-	/// Game nickname / display name
-	/// </summary>
-	public string DisplayName { get; set; }
+	[Net] public Guid Uid { get; set; }
+	[Net] public IList<GameMember> Members { get; set; } = new List<GameMember>();
 
-	/// <summary>
-	/// Type (name) of activity before current one
-	/// </summary>
-	public string PreviousActivityType { get; }
-
-	/// <summary>
-	/// Result of activity before current one
-	/// </summary>
-	public string PreviousActivityResult { get; }
-
-	/// <summary>
-	/// Amount of turns left for this game
-	/// </summary>
-	public int TurnsLeft { get; }
-
-	/// <summary>
-	/// Current status of the game (in progress, complete, etc.)
-	/// </summary>
-	public GameStatus Status { get; }
-
-	/// <summary>
-	/// Unique ID of player that is having their turn
-	/// </summary>
-	public Guid CurrentTurnPlayer { get; }
-
-	/// <summary>
-	/// Activity to (maybe) use when restarting the gamemode
-	/// </summary>
-	public string NextActivity { get; }
-}
-
-public abstract partial class Game : Sandbox.Game, IGameData
-{
-	[JsonIgnore]
-	public static new Game Current => Sandbox.Game.Current as Game;
-
-	public Game()
+	protected Game()
 	{
-		Uid = Guid.NewGuid();
-
 		if ( Host.IsClient )
-			Hud = new();
+		{
+			Local.Hud = new RootPanel();
+		}
+
+		Transmit = TransmitType.Always;
+		Uid = Guid.NewGuid();
 	}
-
-	[SelectCopyIncluded]
-	[Net]
-	public Guid Uid { get; private set; }
-
-	[SelectCopyIncluded]
-	[Net]
-	public string DisplayName { get; set; }
-
-	[SelectCopyIncluded]
-	[Net]
-	public IList<Player> Players { get; private set; }
-
-	[SelectCopyIncluded]
-	[Net]
-	public int TurnsLeft { get; set; }
-
-	[SelectCopyIncluded]
-	[Net]
-	public Guid CurrentTurnPlayer { get; set; }
-
-	[SelectCopyIncluded]
-	// [Net] // todo: does this have to be networked?
-	public string NextActivity { get; set; }
 }

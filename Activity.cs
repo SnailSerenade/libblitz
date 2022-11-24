@@ -1,153 +1,143 @@
-/*
- * part of the BonitoBlitz (w.i.p name) gamemode
- * library used across the board gamemode & minigames
- * - lotuspar, 2022 (github.com/lotuspar)
- * this is inspired by / based on:
- * - https://github.com/Facepunch/sbox-spire/blob/main/code/Gamemodes/BaseGamemode.cs
- *     * (actually, the whole Activity system is based on the above!)
- */
-namespace libblitz;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text.Json;
 using Sandbox;
 
-public interface IActivity
+namespace libblitz;
+
+public abstract class ActivityResult : BaseNetworkable
 {
-	/// <summary>
-	/// Subset of the global Player list
-	/// </summary>
-	public IList<Player> Players { get; }
+	public string Name => GetType().Name;
 
-	public Type PawnType { get; }
-	public Type HudPanelType { get; }
-
-	/// <summary>
-	/// Called when all players are ready.
-	/// </summary>
-	public void Initialize();
-
-	/// <summary>
-	/// Called on every Game.Simulate
-	/// "Called when simulating as part of a player's tick. Like if it's a pawn."
-	/// </summary>
-	/// <param name="cl">Client</param>
-	public void Simulate( Client cl );
-
-	/// <summary>
-	/// Called on every Game.FrameSimulate
-	/// "Called each frame clientside only on Pawn (and anything the pawn decides to call it on)"
-	/// </summary>
-	/// <param name="cl">Client</param>
-	public void FrameSimulate( Client cl );
-
-	/// <summary>
-	/// Called when a player (libblitz.Player) has lost / gained a client
-	/// </summary>
-	public void PlayerChange();
-
-	/// <summary>
-	/// Called when the activity becomes the current global activity
-	/// </summary>
-	public void ActivityActive( string previous, string result );
-
-	/// <summary>
-	/// Called when the activity is no longer the current global activity
-	/// </summary>
-	public string ActivityDormant();
+	public virtual string Serialize() => JsonSerializer.Serialize( this );
+	public virtual T Deserialize<T>( string data ) where T : ActivityResult => JsonSerializer.Deserialize<T>( data );
 }
 
-public abstract partial class Activity : Entity, IActivity
+public abstract partial class BaseActivity : Entity
 {
-	public static Activity Current => Game.Current.Activity;
+	[Net] public Guid Uid { get; private set; }
 
-	[Net]
-	public IList<Player> Players { get; private set; }
+	[Net] private IList<Guid> MemberUids { get; set; } = new List<Guid>();
 
-	public abstract Type PawnType { get; }
-	public abstract Type HudPanelType { get; }
+	// todo: OPTIMIZE!!!!
+	public IEnumerable<GameMember> Members => Game.Current.Members.Where( v => MemberUids.Contains( v.Uid ) );
 
-	public bool PreparedForActivityActive = true;
-	public bool PreparedForInitialize = true;
+	[Net] private IList<Guid> ActorUids { get; set; } = new List<Guid>();
 
-	public Activity( IList<Player> players )
+	// todo: OPTIMIZE!!!!
+	public IEnumerable<GameMember> Actors => Game.Current.Members.Where( v => ActorUids.Contains( v.Uid ) );
+
+	/// <summary>
+	/// Whether or not the activity instance should be deleted after switching to a different activity
+	/// </summary>
+	public virtual bool KeepAlive => false;
+
+	protected BaseActivity()
 	{
+		Uid = Guid.NewGuid();
+
 		Transmit = TransmitType.Always;
-
-		if ( players == null && Host.IsServer )
-			Log.Info( "Using player list from game!" );
-
-		Players = players ?? Game.Current.Players;
 	}
 
-	[ClientRpc]
-	private void InternalClientActivityActive( string previous, string result )
+	protected BaseActivity( List<GameMember> actors )
 	{
-		ActivityActive( previous, result );
-	}
-	public virtual void ActivityActive( string previous, string result )
-	{
-		if ( Host.IsServer )
+		foreach ( var actor in actors )
 		{
-			if ( PawnType != null )
-				foreach ( var player in Players )
-					player.SetPawnByType( PawnType );
+			MemberUids.Add( actor.Uid );
+			ActorUids.Add( actor.Uid );
+		}
+
+		Uid = Guid.NewGuid();
+
+		Transmit = TransmitType.Always;
+	}
+
+	protected BaseActivity( List<GameMember> actors, List<GameMember> spectators )
+	{
+		foreach ( var actor in actors )
+		{
+			MemberUids.Add( actor.Uid );
+			ActorUids.Add( actor.Uid );
+		}
+
+		foreach ( var spectator in spectators )
+		{
+			MemberUids.Add( spectator.Uid );
+		}
+
+		Uid = Guid.NewGuid();
+
+		Transmit = TransmitType.Always;
+	}
+
+	protected BaseActivity( Guid uid, IEnumerable<Guid> actorUids, IEnumerable<Guid> memberUids )
+	{
+		foreach ( var actor in actorUids )
+		{
+			ActorUids.Add( actor );
+		}
+
+		foreach ( var member in memberUids )
+		{
+			MemberUids.Add( member );
+		}
+
+		Uid = uid;
+
+		Transmit = TransmitType.Always;
+	}
+
+
+	public ActivityDescription CreateDescription() =>
+		new()
+		{
+			ActorUids = ActorUids, MemberUids = MemberUids, Name = GetType().Name, Uid = Uid,
+		};
+
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+
+		if ( Host.IsClient )
+		{
+			// yep this is a bad fix but it works
+			ActivityClientEnd();
 		}
 	}
 
-	// This 3 layered ActivityDormant is certainly annoying...
-	public void CallClientActivityDormant()
-	{
-		foreach ( var player in Game.Current.Players )
-		{
-			if ( player.Client != null )
-				InternalClientActivityDormant( To.Single( player.Client ) );
-		}
-	}
-	[ClientRpc]
-	private void InternalClientActivityDormant()
-	{
-		ActivityDormant();
-	}
-	public virtual string ActivityDormant() { return null; }
+	public virtual void ActivityStart( ActivityResult result ) { }
+	public virtual void ActivityEnd() { }
 
-	[ClientRpc]
-	private void InternalClientInitialize() { Initialize(); }
-	public virtual void Initialize() { }
+	public virtual void ActivityClientStart() { }
+	public virtual void ActivityClientEnd() { }
 
-	public virtual void PlayerChange()
+	public virtual void MemberConnect( Client cl ) { }
+	public virtual void MemberDisconnect( Client cl, NetworkDisconnectionReason reason ) { }
+	public new virtual void Simulate( Client cl ) { }
+	public new virtual void FrameSimulate( Client cl ) { }
+}
+
+public class Activity : BaseActivity
+{
+	protected Activity( List<GameMember> actors ) : base( actors )
 	{
-		AttemptStateUpdate();
 	}
 
-	public virtual void AttemptStateUpdate()
+	protected Activity( List<GameMember> actors, List<GameMember> spectators ) : base( actors, spectators )
 	{
-		if ( Players.Count == 0 )
-			return;
-
-		bool ready = true;
-		foreach ( var player in Players )
-		{
-			if ( player.Client == null )
-				ready = false;
-		}
-
-		if ( ready )
-		{
-			if ( PreparedForInitialize )
-			{
-				PreparedForInitialize = false;
-				Initialize();
-				foreach ( var player in Game.Current.Players )
-					InternalClientInitialize( To.Single( player.Client ) );
-			}
-			if ( PreparedForActivityActive )
-			{
-				PreparedForActivityActive = false;
-				ActivityActive( Game.Current.PreviousActivityType, Game.Current.PreviousActivityResult );
-				foreach ( var player in Game.Current.Players )
-					InternalClientActivityActive( To.Single( player.Client ), Game.Current.PreviousActivityType, Game.Current.PreviousActivityResult );
-			}
-		}
 	}
+
+	protected Activity( ActivityDescription description ) : base( description.Uid, description.ActorUids,
+		description.MemberUids )
+	{
+	}
+
+	protected Activity() => Host.AssertClient();
+}
+
+[AttributeUsage( AttributeTargets.Class )]
+public class RegisteredActivityAttribute : Attribute
+{
 }
