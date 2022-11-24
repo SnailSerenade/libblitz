@@ -17,7 +17,7 @@ public partial class GameMember : Entity
 
 	public BaseTile CurrentTile
 	{
-		get => Entity.All.OfType<BaseTile>().SingleOrDefault( v => v.Name == CurrentTileName );
+		get => BaseTile.FromName( CurrentTileName );
 		set => CurrentTileName = value?.Name;
 	}
 
