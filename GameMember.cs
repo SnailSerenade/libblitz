@@ -21,15 +21,6 @@ public partial class GameMember : Entity
 		set => CurrentTileName = value?.Name;
 	}
 
-	public GameMember( SaveData saveData )
-	{
-		Transmit = TransmitType.Always;
-
-		LoadSaveData( saveData );
-
-		UpdateCurrentClient( false );
-	}
-
 	public GameMember()
 	{
 		Transmit = TransmitType.Always;
@@ -39,32 +30,30 @@ public partial class GameMember : Entity
 
 	public class SaveData : ISaveData
 	{
-		public Guid Uid;
-		public string DisplayName;
-		public int Coins;
-		public string CurrentTileName;
+		public Guid Uid { get; set; }
+		public string DisplayName { get; set; }
+		public int Coins { get; set; }
+		public string CurrentTileName { get; set; }
 
-		public IList<long> ClientIds;
+		public IList<long> ClientIds { get; set; }
 
 		public string Serialize() => JsonSerializer.Serialize( this );
 		public static SaveData From( string data ) => JsonSerializer.Deserialize<SaveData>( data );
 	}
 
-	private void LoadSaveData( SaveData saveData )
+	public GameMember( SaveData saveData )
 	{
-		Uid = saveData.Uid;
-		DisplayName = saveData.DisplayName;
-		Coins = saveData.Coins;
-		CurrentTileName = saveData.CurrentTileName;
-		ClientIds = saveData.ClientIds.ToList();
+		Transmit = TransmitType.Always;
+
+		ISaveData.CopyToOutput( saveData, this );
+
+		UpdateCurrentClient( false );
 	}
 
-	public SaveData ToSaveData() =>
-		new SaveData
-		{
-			Uid = Uid,
-			DisplayName = DisplayName,
-			Coins = Coins,
-			ClientIds = ClientIds,
-		};
+	public SaveData ToSaveData()
+	{
+		var instance = new SaveData();
+		ISaveData.CopyFromOutput( instance, this );
+		return instance;
+	}
 }

@@ -9,6 +9,33 @@ public partial class ActivityDescription : Entity
 {
 	public ActivityDescription() => Transmit = TransmitType.Always;
 
+	public class SaveData : ISaveData
+	{
+		public string Name { get; set; }
+		public Guid Uid { get; set; }
+		public IList<Guid> MemberUids { get; set; }
+		public IList<Guid> ActorUids { get; set; }
+
+		public string Serialize()
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	public ActivityDescription( SaveData saveData )
+	{
+		Transmit = TransmitType.Always;
+		
+		ISaveData.CopyToOutput( saveData, this );
+	}
+
+	public SaveData ToSaveData()
+	{
+		var instance = new SaveData();
+		ISaveData.CopyFromOutput( instance, this );
+		return instance;
+	}
+
 	/// <summary>
 	/// Activity type name
 	/// </summary>
