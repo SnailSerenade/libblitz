@@ -95,7 +95,7 @@ public partial class ActivityDescription : Entity
 
 	public new ActivityDescription Transform<T>() => new()
 	{
-		Name = typeof(T).Name, Uid = Guid.NewGuid(), MemberUids = MemberUids.ToList(), ActorUids = ActorUids.ToList(),
+		Name = typeof(T).FullName, Uid = Guid.NewGuid(), MemberUids = MemberUids.ToList(), ActorUids = ActorUids.ToList(),
 	};
 
 	/// <summary>
@@ -147,7 +147,7 @@ public partial class ActivityDescription : Entity
 
 	public static ActivityDescription For<T>()
 	{
-		var description = new ActivityDescription { Name = typeof(T).Name };
+		var description = new ActivityDescription { Name = typeof(T).FullName };
 		return description;
 	}
 }
