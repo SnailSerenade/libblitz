@@ -47,7 +47,27 @@ public partial class GameMember : Entity
 
 		ISaveData.CopyToOutput( saveData, this );
 
+		foreach ( var savedClientId in saveData.ClientIds )
+		{
+			ClientIds.Add( savedClientId );
+		}
+
 		UpdateCurrentClient( false );
+	}
+
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+
+		if ( Host.IsClient )
+		{
+			return;
+		}
+
+		foreach ( var pawn in Pawns )
+		{
+			pawn.Delete();
+		}
 	}
 
 	public SaveData ToSaveData()

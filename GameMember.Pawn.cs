@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Sandbox;
 
 namespace libblitz;
@@ -30,7 +32,9 @@ public partial class GameMember
 		}
 
 		{
-			var pawn = TypeLibrary.GetDescription<T>().Create<T>( args );
+			object[] argsPrefix = { this };
+			var pawn = TypeLibrary.GetDescription<T>()
+				.Create<T>( argsPrefix.Concat( args ?? Array.Empty<object>() ).ToArray() );
 			Pawns.Add( pawn );
 			return pawn;
 		}
@@ -43,7 +47,17 @@ public partial class GameMember
 			return;
 		}
 
-		Log.Info( "SETTING. YAHOO!" );
 		CurrentClient.Pawn = entity;
+	}
+
+	public void UseOrCreatePawn<T>( object[] args = null ) where T : Entity, new()
+	{
+		if ( CurrentClient == null )
+		{
+			return;
+		}
+
+		var pawn = GetOrCreatePawn<T>( args );
+		UsePawn( pawn );
 	}
 }

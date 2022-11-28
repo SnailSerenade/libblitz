@@ -1,20 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
+using Sandbox;
 
 namespace libblitz;
 
 public partial class Game
 {
+	private static BaseFileSystem _saveSubSystem;
+	private BaseFileSystem _gameSubSystem;
+
 	public class SaveData : ISaveData
 	{
-		public Guid Uid;
-		public string DisplayName;
+		public Guid Uid { get; set; }
+		public string DisplayName { get; set; }
 
 		public IList<GameMember.SaveData> Members { get; set; }
 		public IList<ActivityDescription.SaveData> ActivityStack { get; set; }
-		public string ActivityResultTypeName;
-		public string ActivityResultSerialized;
+		public string ActivityResultTypeName { get; set; }
+		public string ActivityResultSerialized { get; set; }
 
 		public string Serialize() => JsonSerializer.Serialize( this );
 		public static SaveData From( string data ) => JsonSerializer.Deserialize<SaveData>( data );
@@ -22,12 +27,39 @@ public partial class Game
 
 	public Game( SaveData saveData ) => LoadSaveData( saveData );
 
+	/// <summary>
+	/// Delete all entities used by libblitz
+	/// </summary>
+	private static void FullCleanup()
+	{
+		foreach ( var entity in Entity.All )
+		{
+			switch ( entity )
+			{
+				case ActivityDescription:
+				case BaseActivity:
+				case GameMember:
+					entity.Delete();
+					break;
+				case Client client:
+					client.Pawn = null;
+					break;
+			}
+		}
+	}
+
 	private void LoadSaveData( SaveData saveData )
 	{
+		// Clean up entities
+		FullCleanup();
+
+		// Clear previous game data
+		Activities.Clear();
+		ActivityStack.Clear();
+		Members.Clear();
+
 		Uid = saveData.Uid;
 		DisplayName = saveData.DisplayName;
-
-		ActivityStack.Clear();
 
 		// Populate activity stack
 		foreach ( var actStackSave in saveData.ActivityStack )
@@ -35,7 +67,7 @@ public partial class Game
 			ActivityStack.Add( new ActivityDescription( actStackSave ) );
 		}
 
-		// Attempt to copy over result
+		// Attempt to load saved ActivityResult
 		if ( saveData.ActivityResultTypeName != null )
 		{
 			var typeDesc = TypeLibrary.GetDescription( saveData.ActivityResultTypeName );
@@ -44,9 +76,62 @@ public partial class Game
 				_activityResult );
 		}
 
-		// Jump to creating new activity
+		// Restore members
+		foreach ( var memberSave in saveData.Members )
+		{
+			var member = new GameMember( memberSave );
+			Members.Add( member );
+		}
+
+		// Create activity instance
+		if ( ActivityStack.Count != 0 )
+		{
+			Activities.Add( ActivityStack.Last().CreateInstance<BaseActivity>() );
+		}
+
+		// Jump to initializing new activity
 		_shouldInitActivityInstance = true;
 		AttemptActivityInit();
+	}
+
+	private static void InitFileSystems()
+	{
+		FileSystem.Data.CreateDirectory( "saves" );
+		_saveSubSystem ??= FileSystem.Data.CreateSubSystem( "saves" );
+	}
+
+	public void LoadPersistent( Guid uid )
+	{
+		InitFileSystems();
+
+		if ( !_saveSubSystem.DirectoryExists( $"{uid}" ) )
+		{
+			throw new Exception( $"Save directory for Game {uid} not found" );
+		}
+
+		_gameSubSystem = _saveSubSystem.CreateSubSystem( $"{uid}" );
+
+		if ( !_gameSubSystem.FileExists( "latest" ) )
+		{
+			throw new Exception( $"Couldn't find save data for Game {Uid}" );
+		}
+
+		var saveData = _gameSubSystem.ReadJson<SaveData>( "latest" );
+		LoadSaveData( saveData );
+	}
+
+	public void SavePersistent( Guid uid )
+	{
+		InitFileSystems();
+
+		if ( !_saveSubSystem.DirectoryExists( $"{uid}" ) )
+		{
+			Log.Info( $"Creating save directory for unsaved Game {uid}" );
+			_saveSubSystem.CreateDirectory( $"{uid}" );
+		}
+
+		_gameSubSystem = _saveSubSystem.CreateSubSystem( $"{uid}" );
+		_gameSubSystem.WriteJson( "latest", ToSaveData() );
 	}
 
 	public SaveData ToSaveData()
@@ -68,9 +153,9 @@ public partial class Game
 		// set up ActivityResult*
 		if ( _activityResult != null )
 		{
-			var typeDesc = TypeLibrary.GetDescription( _activityResult.GetType() );
-			instance.ActivityResultTypeName = typeDesc.TargetType.FullName;
-			instance.ActivityResultSerialized = NonGenericJson.Serialize( typeDesc.TargetType, _activityResult );
+			var activityResultType = _activityResult.GetType();
+			instance.ActivityResultTypeName = activityResultType.FullName;
+			instance.ActivityResultSerialized = NonGenericJson.Serialize( activityResultType, _activityResult );
 		}
 
 		// set up Members
