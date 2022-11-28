@@ -9,10 +9,6 @@ namespace libblitz;
 
 public abstract class ActivityResult : BaseNetworkable
 {
-	public string Name => GetType().Name;
-
-	public virtual string Serialize() => JsonSerializer.Serialize( this );
-	public virtual T Deserialize<T>( string data ) where T : ActivityResult => JsonSerializer.Deserialize<T>( data );
 }
 
 public abstract partial class BaseActivity : Entity
