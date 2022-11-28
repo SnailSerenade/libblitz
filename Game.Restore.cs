@@ -11,20 +11,6 @@ public partial class Game
 	private static BaseFileSystem _saveSubSystem;
 	private BaseFileSystem _gameSubSystem;
 
-	public class SaveData : ISaveData
-	{
-		public Guid Uid { get; set; }
-		public string DisplayName { get; set; }
-
-		public IList<GameMember.SaveData> Members { get; set; }
-		public IList<ActivityDescription.SaveData> ActivityStack { get; set; }
-		public string ActivityResultTypeName { get; set; }
-		public string ActivityResultSerialized { get; set; }
-
-		public string Serialize() => JsonSerializer.Serialize( this );
-		public static SaveData From( string data ) => JsonSerializer.Deserialize<SaveData>( data );
-	}
-
 	public Game( SaveData saveData ) => LoadSaveData( saveData );
 
 	/// <summary>

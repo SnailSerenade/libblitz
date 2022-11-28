@@ -14,6 +14,7 @@ public partial class GameMember : Entity
 	[Net] public string DisplayName { get; set; }
 	[Net] public int Coins { get; set; }
 	[Net] public string CurrentTileName { get; set; }
+	[Net] public int TurnOrderIndex { get; set; }
 
 	public BaseTile CurrentTile
 	{
@@ -24,7 +25,7 @@ public partial class GameMember : Entity
 	public GameMember()
 	{
 		Transmit = TransmitType.Always;
-
+		TurnOrderIndex = Random.Shared.Next();
 		Uid = Guid.NewGuid();
 	}
 
@@ -34,11 +35,8 @@ public partial class GameMember : Entity
 		public string DisplayName { get; set; }
 		public int Coins { get; set; }
 		public string CurrentTileName { get; set; }
-
+		public int TurnOrderIndex { get; set; }
 		public IList<long> ClientIds { get; set; }
-
-		public string Serialize() => JsonSerializer.Serialize( this );
-		public static SaveData From( string data ) => JsonSerializer.Deserialize<SaveData>( data );
 	}
 
 	public GameMember( SaveData saveData )

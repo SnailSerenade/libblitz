@@ -15,17 +15,12 @@ public partial class ActivityDescription : Entity
 		public Guid Uid { get; set; }
 		public IList<Guid> MemberUids { get; set; }
 		public IList<Guid> ActorUids { get; set; }
-
-		public string Serialize()
-		{
-			throw new NotImplementedException();
-		}
 	}
 
 	public ActivityDescription( SaveData saveData )
 	{
 		Transmit = TransmitType.Always;
-		
+
 		ISaveData.CopyToOutput( saveData, this );
 	}
 
@@ -95,7 +90,10 @@ public partial class ActivityDescription : Entity
 
 	public new ActivityDescription Transform<T>() => new()
 	{
-		Name = typeof(T).FullName, Uid = Guid.NewGuid(), MemberUids = MemberUids.ToList(), ActorUids = ActorUids.ToList(),
+		Name = typeof(T).FullName,
+		Uid = Guid.NewGuid(),
+		MemberUids = MemberUids.ToList(),
+		ActorUids = ActorUids.ToList(),
 	};
 
 	/// <summary>

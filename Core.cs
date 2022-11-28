@@ -6,8 +6,6 @@ namespace libblitz;
 
 public interface ISaveData
 {
-	public string Serialize();
-
 	public static void CopyToOutput<TSave, TOutput>( TSave data, TOutput output ) where TSave : ISaveData
 	{
 		var saveTypeDesc = TypeLibrary.GetDescription<TSave>();
