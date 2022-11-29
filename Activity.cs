@@ -113,6 +113,13 @@ public abstract partial class BaseActivity : Entity
 	public virtual void MemberDisconnect( Client cl, NetworkDisconnectionReason reason ) { }
 	public new virtual void Simulate( Client cl ) { }
 	public new virtual void FrameSimulate( Client cl ) { }
+
+	protected void LogInfo( FormattableString txt ) => Log.Info( $"{GetType().Name}: {txt}" );
+	protected void LogInfo( string txt ) => Log.Info( $"{GetType().Name}: {txt}" );
+	protected void LogWarn( FormattableString txt ) => Log.Warning( $"{GetType().Name}: {txt}" );
+	protected void LogWarn( string txt ) => Log.Warning( $"{GetType().Name}: {txt}" );
+	protected void LogErr( FormattableString txt ) => Log.Error( $"{GetType().Name}: {txt}" );
+	protected void LogErr( string txt ) => Log.Error( $"{GetType().Name}: {txt}" );
 }
 
 public class Activity : BaseActivity
@@ -131,6 +138,23 @@ public class Activity : BaseActivity
 	}
 
 	protected Activity() => Host.AssertClient();
+}
+
+public class UnexpectedActivityResultException : Exception
+{
+	public UnexpectedActivityResultException()
+	{
+	}
+
+	public UnexpectedActivityResultException( string message )
+		: base( message )
+	{
+	}
+
+	public UnexpectedActivityResultException( string message, Exception inner )
+		: base( message, inner )
+	{
+	}
 }
 
 [AttributeUsage( AttributeTargets.Class )]
