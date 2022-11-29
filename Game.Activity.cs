@@ -47,7 +47,6 @@ public partial class Game
 			return;
 		}
 
-		Log.Info( $"calling ActivityStart for activity UID {activity.Uid},{ActivityStack.Last().Uid}" );
 		activity.ActivityStart( _activityResult );
 		ClientHandleStartActivity( activity.Uid );
 		_shouldInitActivityInstance = false;
