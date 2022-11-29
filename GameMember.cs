@@ -13,7 +13,7 @@ public partial class GameMember : Entity
 	[Net] public Guid Uid { get; private set; }
 	[Net] public string DisplayName { get; set; }
 	[Net] public int Coins { get; set; }
-	[Net] public string CurrentTileName { get; set; }
+	[Net] private string CurrentTileName { get; set; }
 	[Net] public int TurnOrderIndex { get; set; }
 
 	public BaseTile CurrentTile
@@ -27,6 +27,9 @@ public partial class GameMember : Entity
 		Transmit = TransmitType.Always;
 		TurnOrderIndex = Random.Shared.Next();
 		Uid = Guid.NewGuid();
+
+		// Set current tile to start tile as placeholder
+		CurrentTileName = Config.Current.StartTileName;
 	}
 
 	public class SaveData : ISaveData
