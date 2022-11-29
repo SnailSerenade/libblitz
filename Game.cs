@@ -20,7 +20,7 @@ public abstract partial class Game : Sandbox.Game
 	public GameMember LastTurnPlayer
 	{
 		get => Members.SingleOrDefault( v => v.Uid == LastTurnPlayerUid );
-		set => LastTurnPlayerUid = value.Uid;
+		set => LastTurnPlayerUid = value?.Uid ?? Guid.Empty;
 	}
 
 	public class SaveData : ISaveData
